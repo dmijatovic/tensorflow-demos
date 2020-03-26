@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="img/favicon.png" sizes="16x16" type="image/png">
+  <link href="https://fonts.googleapis.com/css?family=Baloo+2:400,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/index.css">
+  <link rel="stylesheet" href="styles/image.css">
+  <title><%= htmlWebpackPlugin.options.title %></title>
+</head>
+<body>
+<header>
+  <h1>Image prediction with tensorflow</h1>
+  <p>
+    This page uses tensorflow.js and mobilenet model to predict
+    what is on the image.
+  </p>
+</header>
+<article>
+  <section
+    id="image-section">
+    <h2>Image placeholder</h2>
+  </section>
+  <section
+    id="prediction-section"
+    class="prediction">
+    <h2>Prediction placeholder</h2>
+  </section>
+
+  <nav>
+    <input
+      id="file-input"
+      type="file"
+      accept="image/png, image/jpeg"
+      @change="loadFile" />
+
+    <dv4-custom-button
+      id="browse-btn">
+      Browse
+    </dv4-custom-button>
+
+    <dv4-custom-button
+      primary
+      id="predict-btn">
+      Predict
+    </dv4-custom-button>
+  </nav>
+</article>
+<div id="loader-area"></div>
+</body>
+</html>

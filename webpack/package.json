@@ -1,0 +1,30 @@
+{
+  "name": "webpack-tf-image",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "webpack-dev-server --env=development",
+    "prod": "webpack-dev-server --env=production",
+    "build": "rm -rf dist & webpack --env=production",
+    "build:dev": "rm -rf dist & webpack --env=development"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@dv4all/icons": "^0.5.3",
+    "@dv4all/loaders": "^0.4.1",
+    "@dv4all/web-components": "^0.7.0",
+    "@tensorflow-models/mobilenet": "^2.0.4",
+    "@tensorflow/tfjs": "^1.7.0"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^5.1.1",
+    "html-webpack-plugin": "^4.0.1",
+    "webpack": "^4.42.1",
+    "webpack-bundle-analyzer": "^3.6.1",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.10.3"
+  }
+}
