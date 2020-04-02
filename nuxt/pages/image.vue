@@ -1,8 +1,13 @@
 <template>
-  <article>
+  <PageContent>
+    <template #page-title>
+      Image recognition
+    </template>
+    <template #page-body>
+      <article>
     <section
-      id="image-section"
-      >
+      id="image-section">
+      <h2>Image placeholder</h2>
     </section>
     <section
       class="prediction">
@@ -32,14 +37,21 @@
       </dv4-custom-button>
     </nav>
   </article>
+    </template>
+  </PageContent>
+
 </template>
 
 <script>
 import '@dv4all/web-components'
 import * as tfjs from "@tensorflow/tfjs"
 import * as net from "@tensorflow-models/mobilenet"
+import PageContent from '@/components/page/PageContent'
 
 export default {
+  components:{
+    PageContent
+  },
   data(){
     return {
       image:"",
@@ -99,7 +111,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 
 article{
   display:grid;
@@ -116,9 +128,6 @@ section{
 
 #image-section{
   background-color: aqua;
-}
-.image{
-  height:100%;
 }
 
 .prediction{
@@ -137,4 +146,9 @@ nav{
   z-index: -1;
 }
 
+</style>
+<style>
+#image-section img{
+  height:100%;
+}
 </style>

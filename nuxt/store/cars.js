@@ -1,35 +1,46 @@
 
 export const state=()=>({
-  data:[]
+  carData:[],
+  mpgData:[],
+  plotData:[],
+  carLabel:[]
 })
 
 export const actions={
   getCarsData({commit}, action){
-    console.log("getCarsData...", action)
-    fetch('https://storage.googleapis.com/tfjs-tutorials/carsData.json')
-    .then(resp=>resp.json())
-    .then(data=>{
-      return data
-        .map(car => ({
-          mpg: car.Miles_per_Gallon,
-          horsepower: car.Horsepower,
-        }))
-        .filter(car => (car.mpg != null && car.horsepower != null));
-    })
-    .then(clean=>{
-      console.log("Cleaned data...", clean)
-      commit("setCarsData",{payload:clean})
-      // return clean
-    })
-    .catch(e=>{console.error(e)})
+    // console.log("getCarsData...", action)
+    return fetch('https://storage.googleapis.com/tfjs-tutorials/carsData.json')
+      .then(resp=>resp.json())
+      .then(data=>{
+        commit ("setCarsData",data)
+      })
+      .catch(e=>{console.error(e)})
   }
 }
 
 export const mutations={
-  setCarsData(state, action){
-    // debugger
-    // console.log("setCarsData...", action)
-    const {payload} = action
-    state.cars = payload
+  setCarsData(state, rawData){
+    // console.log("setCarsData...", rawData)
+    const plotData=[], carData=[], mpgData=[], carLabel=[]
+    debugger
+    rawData.forEach(car=>{
+      if (car['Miles_per_Gallon'] != null && car['Horsepower'] != null){
+        plotData.push({
+          x:car.Horsepower,
+          y:car.Miles_per_Gallon
+        })
+        mpgData.push({
+          mpg: car.Miles_per_Gallon,
+          horsepower: car.Horsepower
+        })
+        carData.push(car)
+        carLabel.push(`${car['Name']} [${car['Year']}]`)
+      }
+    })
+    //save data to state
+    state.carData = carData
+    state.plotData = plotData
+    state.mpgData = mpgData
+    state.carLabel = carLabel
   }
 }

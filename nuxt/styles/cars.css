@@ -1,0 +1,12 @@
+
+
+.visor-controls{
+  /* height:3rem; */
+  background-color: transparent;
+}
+
+.visor-controls > button {
+  border: 1px solid lightgrey;
+  background-color: transparent;
+}
+

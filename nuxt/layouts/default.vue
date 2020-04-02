@@ -1,55 +1,99 @@
 <template>
-  <div>
-    <nuxt />
-  </div>
+  <article class="app-content">
+    <header class="app-header">
+      <h1>Tensorflow.js demos</h1>
+      <nav class="app-header-nav">
+        <nuxt-link
+          v-for="route in links"
+          :key="route.name"
+          :to="route.path"
+          class="app-header-nav-link"
+        >
+          {{ route.name }}
+        </nuxt-link>
+      </nav>
+    </header>
+    <main class="app-body">
+      <nuxt />
+    </main>
+    <footer class="app-footer">
+      @dv4all 2020
+    </footer>
+  </article>
 </template>
+<script>
+import PageContent from '@/components/page/PageContent'
+export default {
+  components:{
+    PageContent
+  },
+  data(){
+    // console.log('default.data...router...',this.$router)
+    const {routes} = this.$router.options
+    // console.log('Mounted...routes...',routes)
+    const links = routes.filter(r=>{
+      if (r.path==='/'){
+        r.name='Home'
+        return r
+      }
+      return r
+    })
+    return {
+      links
+    }
+  },
+  // mounted(){
+  //   console.log('default.mounted...data...',this.data)
+  // }
+}
+</script>
 
 <style>
-html {
-  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 16px;
-  word-spacing: 1px;
-  -ms-text-size-adjust: 100%;
-  -webkit-text-size-adjust: 100%;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-font-smoothing: antialiased;
-  box-sizing: border-box;
+
+.app-content{
+  display:grid;
+  grid-auto-columns:1fr;
+  grid-auto-rows: minmax(4rem,auto) 1fr minmax(2rem, auto);
+  min-height:100vh;
 }
 
-*,
-*:before,
-*:after {
-  box-sizing: border-box;
-  margin: 0;
+.app-header,
+.app-body,
+.app-footer{
+  display: flex;
+  padding: 0rem 2rem;
 }
 
-.button--green {
-  display: inline-block;
-  border-radius: 4px;
-  border: 1px solid #3b8070;
-  color: #3b8070;
-  text-decoration: none;
-  padding: 10px 30px;
+.app-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  border-bottom: 1px solid var(--color-grey,#eee);
+  background-color: var(--color-accent, #333)
+}
+.app-header-nav{
+  display: flex;
+  align-items: stretch;
+  min-height: 4rem;
+  padding: 0rem 1rem;
 }
 
-.button--green:hover {
-  color: #fff;
-  background-color: #3b8070;
+.app-header-nav-link{
+  display: flex;
+  align-items: center;
+  color: var(--color-primary, #09434D);
+  padding: 0rem 1rem;
 }
 
-.button--grey {
-  display: inline-block;
-  border-radius: 4px;
-  border: 1px solid #35495e;
-  color: #35495e;
-  text-decoration: none;
-  padding: 10px 30px;
-  margin-left: 15px;
+.nuxt-link-exact-active{
+  font-weight: 700;
+  background-color:var(--link-active-color, #E8EDEE);
 }
 
-.button--grey:hover {
-  color: #fff;
-  background-color: #35495e;
+.app-footer{
+  background-color: var(--footer-bg-color, #333);
+  color: var(--footer-tx-color, #fff);
+  padding: 1rem 2rem;
 }
+
 </style>

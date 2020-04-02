@@ -1,33 +1,23 @@
 <template>
-  <div class="container">
-    <div>
-      {{hello}}
-    </div>
-  </div>
+  <PageContent>
+    <template #page-title>
+      Tensorflow demo
+    </template>
+    <template #page-body>
+      <p>Welcome to tensorflow demo site with NuxtJS.
+      </p>
+    </template>
+  </PageContent>
 </template>
 
 <script>
+
+import PageContent from '@/components/page/PageContent'
 import { mapState } from 'vuex'
 
 export default {
-  asyncData(){
-    return fetch('https://storage.googleapis.com/tfjs-tutorials/carsData.json')
-    .then(resp=>resp.json())
-    .then(data=>{
-      return data
-        .map(car => ({
-          mpg: car.Miles_per_Gallon,
-          horsepower: car.Horsepower,
-        }))
-        .filter(car => (car.mpg != null && car.horsepower != null));
-    })
-    .then(clean => {
-      // console.log("Cleaned data...", clean)
-      return {
-        carsData: clean
-      }
-    })
-    .catch(e=>{console.error(e)})
+  components:{
+    PageContent
   },
   computed:{
     ...mapState([
@@ -40,18 +30,13 @@ export default {
     }
   },
   mounted(){
-    debugger
-    // console.log("store", this.$store)
-    this.$store.commit({
-      type:"cars/setCarsData",
-      payload: this.carsData
-    })
+    // debugger
   }
 }
 </script>
 
 <style>
-.container {
+/* .container {
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
@@ -80,5 +65,5 @@ export default {
 
 .links {
   padding-top: 15px;
-}
+} */
 </style>

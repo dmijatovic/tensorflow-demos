@@ -18,16 +18,21 @@ module.exports = {
   /*
   ** Customize the progress-bar color
   */
-  loading: { color: '#fff' },
+  loading: { color: '#333' },
   /*
   ** Global CSS
   */
   css: [
+    '@/styles/variables.css',
+    '@/styles/transitions.css',
+    '@/styles/index.css',
+    "@/styles/cars.css"
   ],
   /*
   ** Plugins to load before mounting the App
   */
   plugins: [
+    // { src: '@/plugins/usePageContent.js', mode: 'client' }
     // { src: '@/plugins/dv4all.js', mode: 'client' },
     // { src: '@/plugins/tensorflow.js', mode: 'client' }
   ],
