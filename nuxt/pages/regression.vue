@@ -54,6 +54,7 @@
 import {mapState} from 'vuex'
 import {lineChart} from '../utils/tf'
 import fitLine from '../utils/gradientDescent'
+import train from '../utils/tf-regression'
 
 export default {
   asyncData(ctx){
@@ -74,7 +75,7 @@ export default {
       },
       model:{
         units: 100,
-        step: 0.001,
+        step: 0.00001,
         features:[],
         labels:[]
       },
@@ -135,9 +136,55 @@ export default {
         })
     },
     makePredictions(){
+      const x=[], y=[]
 
+      this.loader={
+        show:true,
+        message:"Train the model..."
+      }
+      //start timer
+      const startTime = new Date()
+
+      this.mpgData.map(rec=>{
+        x.push(rec['mpg'])
+        y.push(rec['horsepower'])
+        return [[rec['mpg']],[rec['horsepower']]]
+      })
+
+      const options={
+        ...this.model,
+        features: y,
+        labels: x
+      }
+
+      setTimeout(()=>{
+        train(options)
+        .then(resp=>{
+          this.training={
+            time: new Date() - startTime,
+            params:{
+              ...resp
+            }
+          }
+          console.log("fitLine reponse...", this.training)
+        })
+        .catch(resp=>{
+          console.error("fitLine failed...", resp)
+          this.training={
+            time: new Date() - startTime,
+            params:{
+              ...resp
+            }
+          }
+        })
+        .finally(()=>{
+          this.loader={
+            show:false,
+            message:"Done"
+          }
+        })
+      },100)
     }
-
   }
 }
 </script>

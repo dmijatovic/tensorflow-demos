@@ -18,3 +18,12 @@ Basic regression approach using mean square error.
 - En - estimated case value
 - An - actual case value
 - N - number of cases
+
+### R squared
+
+Used to indicate fit of the model. The values are from -Infinity to 1, where 1 means perfect fit.
+
+`Rsq = 1 - (SSres / SStot)`
+
+- SStot: total squared sum of diff from avarage (actual - avergage)\*\*2
+- SSres: total squared sum of diff from predicted (actual - predicted)\*\*2
