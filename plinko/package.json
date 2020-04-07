@@ -1,0 +1,17 @@
+{
+  "name": "plinko",
+  "version": "0.0.1",
+  "description": "",
+  "main": "score.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "start":"serve",    
+    "cypress":"cypress open",
+    "test:data":"cypress run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
