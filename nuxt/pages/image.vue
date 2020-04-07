@@ -43,7 +43,6 @@
 </template>
 
 <script>
-import '@dv4all/web-components'
 import * as tfjs from "@tensorflow/tfjs"
 import * as net from "@tensorflow-models/mobilenet"
 import PageContent from '@/components/page/PageContent'

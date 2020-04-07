@@ -1,13 +1,10 @@
 
 export const state=()=>({
-  carData:[],
-  mpgData:[],
-  plotData:[],
-  carLabel:[]
+  housesData:[],
 })
 
 export const actions={
-  getCarsData({commit}, action){
+  getHousesData({commit}, action){
     // console.log("getCarsData...", action)
     return fetch('https://storage.googleapis.com/tfjs-tutorials/carsData.json')
       .then(resp=>resp.json())

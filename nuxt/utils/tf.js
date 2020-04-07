@@ -5,14 +5,15 @@ import * as tfvis from '@tensorflow/tfjs-vis'
  * Creating linear model based on training
  * https://codelabs.developers.google.com/codelabs/tfjs-training-regression/index.html#3
  */
-export function createLinearModel(){
+export function createLinearModel(units){
   //create sequential model - linear model
   //see https://js.tensorflow.org/api/latest/#sequential
   const model = tf.sequential()
 
   // Add a single input layer
-  model.add(tf.layers.dense({inputShape: [1], units: 1, useBias: true}));
+  model.add(tf.layers.dense({inputShape: [1], units, useBias: true}));
 
+  model.add(tf.layers.dense({units: 24, activation: 'sigmoid', useBias: true}))
   // Add an output layer
   model.add(tf.layers.dense({units: 1, useBias: true}));
 
@@ -29,7 +30,7 @@ export function drawScatterplot({name,tab,values,series},config){
 }
 
 export function visModel(model){
-  tfvis.show.modelSummary({name: 'Model Summary'}, model);
+  tfvis.show.modelSummary({name: 'Model Summary', tab:"Model"}, model);
 }
 
 /**
@@ -134,7 +135,7 @@ export function testModel(model, inputData, normalizationData) {
   tfvis.render.scatterplot(
     {
       name: 'Model Predictions vs Original Data',
-      tab:"Scatter"
+      tab: "Model"
     },{
       values: [originalPoints, predictedPoints],
       series: ['original', 'predicted']

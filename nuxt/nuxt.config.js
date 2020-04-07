@@ -33,7 +33,7 @@ module.exports = {
   */
   plugins: [
     // { src: '@/plugins/usePageContent.js', mode: 'client' }
-    // { src: '@/plugins/dv4all.js', mode: 'client' },
+    { src: '@/plugins/dv4all.js', mode: 'client' },
     // { src: '@/plugins/tensorflow.js', mode: 'client' }
   ],
   /*

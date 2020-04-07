@@ -7,7 +7,17 @@
       <p>
         carData: {{carData.length}}<br/>
         plotData: {{plotData.length}}<br/>
-        trainingTime: {{training.time}}
+        trainingTime: {{training.time}}ms
+      </p>
+      <p>
+        <dv4-text-input
+          name="units"
+          label="Model units"
+          message="Type nr. of initial model units"
+          :value="sequentialModel.units"
+          @onChange="setUnits"
+        >
+        </dv4-text-input>
       </p>
       <p v-if="training.params">
         Params
@@ -16,8 +26,8 @@
     </section>
     <nav>
       <dv4-custom-button
-        @click="visualizeModel">
-        Model summary
+        @click="createModel">
+        Create model
       </dv4-custom-button>
       <dv4-custom-button
         @click="trainModel"
@@ -27,10 +37,10 @@
       <dv4-custom-button
         @click="testModel"
         danger>
-        Test predictions
+        Test model
       </dv4-custom-button>
       <dv4-custom-button
-        @click="testPrediction"
+        @click="makePredictions"
         >
         Make predictions
       </dv4-custom-button>
@@ -44,8 +54,8 @@
 
 <script>
 import {mapState} from 'vuex'
-import {Dv4LoaderTimer} from '@dv4all/loaders'
-import {Dv4CustomButton} from '@dv4all/web-components'
+// import {Dv4LoaderTimer} from '@dv4all/loaders'
+// import {Dv4CustomButton, Dv4TextInput} from '@dv4all/web-components'
 import {
   drawScatterplot, visModel, createLinearModel,
   convertToTensor,trainModel, testModel,
@@ -71,8 +81,11 @@ export default {
         show:false,
         message: "Loading..."
       },
+      sequentialModel:{
+        units: 1
+      },
       training:{
-        time: null,
+        time: 0,
         params: null
       }
     }
@@ -97,7 +110,15 @@ export default {
         yLabel: 'MPG',
         height: 300
       })
-      this.model = createLinearModel()
+    },
+    setUnits({target}){
+      this.sequentialModel.units = parseInt(target.value)
+      console.log("setUnits...", this.sequentialModel.units)
+    },
+    createModel(){
+      const {sequentialModel} = this
+      this.model = createLinearModel(sequentialModel.units)
+      this.visualizeModel()
     },
     visualizeModel(){
       if (this.model){
@@ -152,14 +173,13 @@ export default {
           .catch(e=>console.error(e))
       },100)
     },
-    testPrediction(){
-      debugger
+    makePredictions(){
       if (this.model && this.tensorData){
         const predicted = makePrediction(this.model,this.tensorData)
-        debugger
+
         drawScatterplot({
           name:"Predictions MPG",
-          tab:"Scatter",
+          tab: "Model",
           values:[predicted],
           series: ['Predictions']
         },{
