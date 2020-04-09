@@ -15,7 +15,7 @@ function getInfo(append={}){
     ...append,
     Rsq: R,
     // optimum,
-    model: {
+    weights: {
       const:c[0],
       slopes:s,
       // epochStat
@@ -331,6 +331,18 @@ function rSquared(){
   // debugger
   const R = 1 - (SSres/SStot)
   return R
+}
+
+/**
+ * Make prediction for given features and the model
+ * @param {Array} features to base prediction on
+ * @param {Array} weights to use from mse model
+ */
+export function predict(features=[],weights=[]){
+  const ft = standardizeFeatures({features})
+  const w = tf.tensor2d(weights,[weights.length, 1])
+  const p = ft.matMul(w)
+  return p.arraySync()
 }
 
 export default lineFit

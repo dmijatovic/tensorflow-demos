@@ -19,15 +19,21 @@
           :disabled="tfvis===null">
           Chart panel
         </dv4-custom-button>
+        <dv4-custom-button
+          @click="testModel"
+          danger
+          :disabled="tfvis===null">
+          Test model
+        </dv4-custom-button>
       </nav>
     </template>
     <template #page-body>
       <section>
         <p>
           This page demonstrates manually created linear regression model using
-          MSE and gradient descent approach. It supports batchwise weight
-          backpropagation (update). If you omit batch size whole sample is processed
-          in one go.
+          MSE and gradient descent. It supports batchwise weight
+          backpropagation (update). If you omit batch size complete sample is processed
+          in one go for the number of epochs specified.
         </p>
         <p>
           To train the model cars data with {{carData.length}} records is used.
@@ -68,10 +74,19 @@
             @onChange="setStep"
           >
           </dv4-text-input>
+          <dv4-text-input
+            class="test-input"
+            name="test-cases"
+            label="Test cases"
+            message="Type no. of test cases to select"
+            :value="testCases"
+            @onChange="setTestCases"
+          >
+          </dv4-text-input>
         </p>
-        <p v-if="training.params">
-          Params
-          <pre>{{JSON.stringify(training.params,null, 2)}}</pre>
+        <p v-if="training.model">
+          Model
+          <pre>{{JSON.stringify(training.model,null, 2)}}</pre>
         </p>
       </section>
       <dv4-loader-timer
@@ -87,7 +102,7 @@ import PageContent from '@/components/page/PageContent'
 import {mapState} from 'vuex'
 import {lineChart, toggleVisor} from '../utils/tf'
 import fitLine from '../utils/gradientDescent'
-import train from '../utils/tf-regression'
+import train, {predict} from '../utils/tf-mse'
 
 export default {
   components:{
@@ -119,8 +134,9 @@ export default {
       },
       training:{
         time: 0,
-        params: null
+        model: null
       },
+      testCases:10,
       tfvis: null
     }
   },
@@ -148,9 +164,18 @@ export default {
       }
       console.log("setBatchSize...", this.model.batchSize)
     },
+    setTestCases({target}){
+      this.testCases = parseFloat(target.value)
+      console.log("setTestCases...", this.testCases)
+    },
     chartPanel(){
       if (!this.tfvis) return false
       this.tfvis.visor().toggle()
+    },
+    testModel(){
+      const {model} = this.training
+      debugger
+      if (model) this.testPredictions(model)
     },
     naiveModel(){
       const x=[],y=[]
@@ -220,7 +245,7 @@ export default {
           delete resp.mse
           this.training={
             time: new Date() - startTime,
-            params:{
+            model:{
               ...resp
             }
           }
@@ -230,7 +255,7 @@ export default {
           console.error("fitLine failed...", resp)
           this.training={
             time: new Date() - startTime,
-            params:{
+            model:{
               ...resp
             }
           }
@@ -256,11 +281,67 @@ export default {
           yLabel: 'MSE',
           // height: 300
       })
+    },
+    selectTestSample(size=10){
+      const s = Math.floor(this.carData.length / size)-1
+      const {features, labels} = this.model
+      const sample=[], l=[]
+      let pos=0
+
+      if (s < 0) return null
+
+      for (let i=0; i < size; i++){
+        pos+=s
+        const rec = features.map(f=>{
+          return this.carData[pos][f]
+        })
+        sample.push(rec)
+        l.push(this.carData[pos][labels])
+      }
+      return {f:sample, l}
+    },
+    testPredictions({weights}){
+      debugger
+      const s = weights.slopes.map(i=>i[0])
+      const w = [weights.const, ...s]
+      const {f,l} = this.selectTestSample(this.testCases)
+
+      //make predictions
+      const mpg = predict(f,w)
+
+      //chart predicted vs actual
+      const val = mpg.map((v,i)=>{
+        return {
+          x:i,
+          y:v[0]
+        }
+      })
+      const lbl = l.map((v,i)=>{
+        return {
+          x:i,
+          y:v
+        }
+      })
+      //draw line chart
+      this.tfvis = lineChart(
+        {name:"Test predictions",tab:"MSE"},
+        {
+          values: [val,lbl],
+          series:['prediction','actual']
+        },
+        {
+          xLabel: 'case',
+          yLabel: 'MPG',
+          // height: 300
+      })
+      // console.log("MPG: ", mpg.toString())
     }
   }
 }
 </script>
 
 <style>
-
+.param-input{
+  width:9rem;
+}
 </style>
