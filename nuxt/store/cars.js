@@ -32,7 +32,10 @@ export const mutations={
           mpg: car.Miles_per_Gallon,
           horsepower: car.Horsepower
         })
-        carData.push(car)
+        carData.push({
+          ...car,
+          "YYYY": parseInt(car['Year'].substr(0,4))
+        })
         carLabel.push(`${car['Name']} [${car['Year']}]`)
       }
     })

@@ -176,7 +176,7 @@ export function makePrediction(model,{inputMax, inputMin, labelMin, labelMax}){
 }
 
 export function toggleVisor(){
-  tfvis.toggleVisor()
+  tfvis.visor().toggle()
 }
 
 export function lineChart({
@@ -190,6 +190,7 @@ export function lineChart({
     {values, series},
     config
   );
+  return tfvis
 }
 export function historyChart(){
   tfvis.show.history(surface, history, ['loss', 'acc']);
