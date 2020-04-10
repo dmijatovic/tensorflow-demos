@@ -1,17 +1,17 @@
 <template>
   <PageContent>
     <template #page-title>
-      <h1>Tensorflow - Linear Regression Model (MSE)</h1>
+      <h1>Logistic regression</h1>
       <nav>
-        <!-- <dv4-custom-button
-          @click="naiveModel"
-          primary>
-          Naive model
-        </dv4-custom-button> -->
         <dv4-custom-button
-          @click="trainModel"
+          @click="trainModel('Low_CO2_Emission')"
           >
-          Train model
+          Emission model
+        </dv4-custom-button>
+        <dv4-custom-button
+          @click="trainModel('Fuel_Efficiency')"
+          >
+          Fuel eff. model
         </dv4-custom-button>
         <dv4-custom-button
           @click="chartPanel"
@@ -28,14 +28,13 @@
       </nav>
     </template>
     <template #page-body>
-      <section>
-        <p>
-          This page demonstrates manually created linear regression model using
-          MSE and gradient descent. It supports batchwise weight
-          backpropagation (update). If you omit batch size complete sample is processed
-          in one go for the number of epochs specified.
-        </p>
-        <p>
+      <p>
+        Logistical regression uses sigmoid function to produce outcomes
+        between 0 and 1. The priniciple of MSE calculation is similair.
+        The difference is that output of "linear" equasion is plugged into
+        Sigmoid function: 1 / (1 + e ** value from linear regression equasion).
+      </p>
+      <p>
           To train the model cars data with {{carData.length}} records is used.
           <br/>
           The columns in cars data: {{Object.keys(carData[0])}}
@@ -52,8 +51,8 @@
             name="units"
             label="Epochs"
             message="Type nr. of itteractions in the model"
-            :value="model.units"
-            @onChange="setUnits"
+            :value="model.epochs"
+            @onChange="setEpochs"
           >
           </dv4-text-input>
           <dv4-text-input
@@ -75,6 +74,15 @@
           >
           </dv4-text-input>
           <dv4-text-input
+            class="param-input"
+            name="sigmoid-treshold"
+            label="Sigmoid Treshold"
+            message="Value between 0.1 and 0.9"
+            :value="model.sigmoidTreshold"
+            @onChange="setTreshold"
+          >
+          </dv4-text-input>
+          <dv4-text-input
             class="test-input"
             name="test-cases"
             label="Test cases"
@@ -88,7 +96,7 @@
           Model
           <pre>{{JSON.stringify(training.model,null, 2)}}</pre>
         </p>
-      </section>
+
       <dv4-loader-timer
         v-if="loader.show">
           {{loader.message}}
@@ -100,9 +108,9 @@
 <script>
 import PageContent from '@/components/page/PageContent'
 import {mapState} from 'vuex'
-import {lineChart, toggleVisor} from '../utils/tf'
+import {lineChart, scatterPlot, toggleVisor} from '../utils/tf'
 import fitLine from '../utils/gradientDescent'
-import train, {predict} from '../utils/tf-mse'
+import train, {predict} from '../utils/tf-sigmoid'
 
 export default {
   components:{
@@ -125,12 +133,14 @@ export default {
         message: "Loading..."
       },
       model:{
-        units: 10,
+        epochs: 10,
         step: 0.125,
         treshold: 0.002,
         batchSize: 50,
+        sigmoid: true,
+        sigmoidTreshold: 0.5,
         features:['Horsepower','Weight_in_lbs','Cylinders','YYYY'],
-        labels:'Miles_per_Gallon'
+        labels:'Low_CO2_Emission'
       },
       training:{
         time: 0,
@@ -142,19 +152,21 @@ export default {
   },
   computed:{
     ...mapState("cars",[
-      'mpgData',
-      'carData',
-      'carLabel'
+      'carData'
     ])
   },
   methods:{
-    setUnits({target}){
-      this.model.units = parseInt(target.value)
-      console.log("setUnits...", this.model.units)
+    setEpochs({target}){
+      this.model.epochs = parseInt(target.value)
+      console.log("setEpochs...", this.model.epochs)
     },
     setStep({target}){
       this.model.step = parseFloat(target.value)
       console.log("setStep...", this.model.step)
+    },
+    setTreshold({target}){
+      this.model.sigmoidTreshold = parseFloat(target.value)
+      console.log("setTreshold...", this.model.sigmoidTreshold)
     },
     setBatchSize({target}){
       if (target.value===""){
@@ -174,47 +186,13 @@ export default {
     },
     testModel(){
       const {model} = this.training
-      if (model) this.testPredictions(model)
+      if (model) this.testPredictions()
     },
-    naiveModel(){
-      const x=[],y=[]
-      const z = this.mpgData.map(rec=>{
-        x.push(rec['mpg'])
-        y.push(rec['horsepower'])
-        return [[rec['mpg']],[rec['horsepower']]]
-      })
-      const options={
-        ...this.model,
-        features: y,
-        labels: x
-      }
-      //start timer
-      const startTime = new Date()
-
-      fitLine(options)
-        .then(resp=>{
-          this.training={
-            time: new Date() - startTime,
-            params:{
-              ...resp
-            }
-          }
-          // console.log("fitLine reponse...", this.training)
-        })
-        .catch(resp=>{
-          console.error("fitLine failed...", resp)
-          this.training={
-            time: new Date() - startTime,
-            params:{
-              ...resp
-            }
-          }
-        })
-    },
-    trainModel(){
+    trainModel(labels){
       const x=[], y=[]
-      const {labels, features} = this.model
-
+      const {features} = this.model
+      debugger
+      this.model.labels = labels
       this.loader={
         show:true,
         message:"Train the model..."
@@ -236,12 +214,12 @@ export default {
         features: y,
         labels: x
       }
-
+      debugger
       setTimeout(()=>{
         train(options)
         .then(resp=>{
-          this.lineChartMSE(resp.mse)
-          delete resp.mse
+          this.lineChartCostFn(resp.cost)
+          delete resp.cost
           this.training={
             time: new Date() - startTime,
             model:{
@@ -251,7 +229,7 @@ export default {
           // console.log("fitLine reponse...", this.training)
         })
         .catch(resp=>{
-          console.error("fitLine failed...", resp)
+          console.error("trainModel failed...", resp)
           this.training={
             time: new Date() - startTime,
             model:{
@@ -267,17 +245,17 @@ export default {
         })
       },100)
     },
-    lineChartMSE(mse){
-      const val = mse.map((v,i)=>{
+    lineChartCostFn(cost){
+      const val = cost.map((v,i)=>{
         return {x:i, y:v}
       })
       //draw line chart
       this.tfvis = lineChart(
-        {name:"MSE",tab:"MSE"},
+        {name:"Cost",tab:"Sigmoid"},
         {values: val},
         {
           xLabel: 'epoch',
-          yLabel: 'MSE',
+          yLabel: 'Cross Entropy',
           // height: 300
       })
     },
@@ -299,16 +277,19 @@ export default {
       }
       return {f:sample, l}
     },
-    testPredictions({weights}){
+    testPredictions(){
+      // debugger
+      const { sigmoid, sigmoidTreshold } = this.model
+      const { weights } = this.training.model
       const s = weights.slopes.map(i=>i[0])
       const w = [weights.const, ...s]
       const {f,l} = this.selectTestSample(this.testCases)
 
       //make predictions
-      const mpg = predict(f,w)
+      const prediction = predict(f,w,sigmoid,sigmoidTreshold)
 
       //chart predicted vs actual
-      const val = mpg.map((v,i)=>{
+      const val = prediction.map((v,i)=>{
         return {
           x:i,
           y:v[0]
@@ -320,16 +301,16 @@ export default {
           y:v
         }
       })
-      //draw line chart
-      this.tfvis = lineChart(
-        {name:"Test predictions",tab:"MSE"},
+      //draw scatterplot
+      scatterPlot(
+        {name:"Test predictions",tab:"Sigmoid"},
         {
           values: [val,lbl],
           series:['prediction','actual']
         },
         {
           xLabel: 'case',
-          yLabel: 'MPG',
+          yLabel: this.model.labels,
           // height: 300
       })
       // console.log("MPG: ", mpg.toString())

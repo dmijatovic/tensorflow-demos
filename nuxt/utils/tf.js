@@ -192,6 +192,20 @@ export function lineChart({
   );
   return tfvis
 }
+
+export function scatterPlot({
+  name='Line chart',
+  tab='Line charts'},
+  {values, series},
+  config
+){
+  tfvis.render.scatterplot(
+    {name, tab},
+    {values, series},
+    config
+  );
+  return tfvis
+}
 export function historyChart(){
   tfvis.show.history(surface, history, ['loss', 'acc']);
 }
