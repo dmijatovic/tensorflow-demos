@@ -1,42 +1,46 @@
+import {getCSV} from "../utils/tf-data"
 
 export const state=()=>({
+  url:'/data/kc_house_data.csv',
   housesData:[],
 })
 
 export const actions={
-  getHousesData({commit}, action){
+  getHousesData({commit,state}, action){
     // console.log("getCarsData...", action)
-    return fetch('https://storage.googleapis.com/tfjs-tutorials/carsData.json')
-      .then(resp=>resp.json())
+    if (state.housesData.length > 0) return true
+    return getCSV(state.url)
+      .toArray()
+      .then(resp=>resp)
       .then(data=>{
-        commit ("setCarsData",data)
+        commit ("setHousesData",data)
       })
       .catch(e=>{console.error(e)})
+      .finally(()=>{
+        return true
+      })
   }
 }
 
 export const mutations={
-  setCarsData(state, rawData){
+  setHousesData(state, rawData){
     // console.log("setCarsData...", rawData)
-    const plotData=[], carData=[], mpgData=[], carLabel=[]
-    rawData.forEach(car=>{
-      if (car['Miles_per_Gallon'] != null && car['Horsepower'] != null){
+    const plotData=[]
+    rawData.forEach(row =>{
+      if (row['price'] != null
+        && row['sqft_living'] != null
+        && row['sqft_lot'] != null){
+        // debugger
         plotData.push({
-          x:car.Horsepower,
-          y:car.Miles_per_Gallon
+          x:row['sqft_living'],
+          y:row['price']
         })
-        mpgData.push({
-          mpg: car.Miles_per_Gallon,
-          horsepower: car.Horsepower
-        })
-        carData.push(car)
-        carLabel.push(`${car['Name']} [${car['Year']}]`)
       }
     })
     //save data to state
-    state.carData = carData
+    state.housesData = rawData
     state.plotData = plotData
-    state.mpgData = mpgData
-    state.carLabel = carLabel
+    // state.mpgData = mpgData
+    // state.carLabel = carLabel
   }
 }

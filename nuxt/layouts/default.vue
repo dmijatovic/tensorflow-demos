@@ -1,7 +1,7 @@
 <template>
   <article class="app-content">
     <header class="app-header">
-      <h1>Tensorflow.js demos</h1>
+      <h1>Tensorflow.js</h1>
       <nav class="app-header-nav">
         <nuxt-link
           v-for="route in links"

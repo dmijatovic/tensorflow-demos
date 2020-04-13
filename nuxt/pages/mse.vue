@@ -1,7 +1,7 @@
 <template>
   <PageContent>
     <template #page-title>
-      <h1>Tensorflow - Linear Regression Model (MSE)</h1>
+      <h1>Linear Regression Model using MSE</h1>
       <nav>
         <!-- <dv4-custom-button
           @click="naiveModel"
@@ -52,8 +52,8 @@
             name="units"
             label="Epochs"
             message="Type nr. of itteractions in the model"
-            :value="model.units"
-            @onChange="setUnits"
+            :value="model.epochs"
+            @onChange="setEpochs"
           >
           </dv4-text-input>
           <dv4-text-input
@@ -100,9 +100,9 @@
 <script>
 import PageContent from '@/components/page/PageContent'
 import {mapState} from 'vuex'
-import {lineChart, toggleVisor} from '../utils/tf'
+import {lineChart, toggleVisor} from '../utils/tf-chart'
+import trainModel, {predict} from '../utils/tf-regression'
 import fitLine from '../utils/gradientDescent'
-import train, {predict} from '../utils/tf-mse'
 
 export default {
   components:{
@@ -125,10 +125,11 @@ export default {
         message: "Loading..."
       },
       model:{
-        units: 10,
+        epochs: 30,
         step: 0.125,
-        treshold: 0.002,
-        batchSize: 50,
+        treshold: 0.0001,
+        batchSize: null,
+        activation:'mse',
         features:['Horsepower','Weight_in_lbs','Cylinders','YYYY'],
         labels:'Miles_per_Gallon'
       },
@@ -136,7 +137,7 @@ export default {
         time: 0,
         model: null
       },
-      testCases:10,
+      testCases:50,
       tfvis: null
     }
   },
@@ -148,9 +149,9 @@ export default {
     ])
   },
   methods:{
-    setUnits({target}){
-      this.model.units = parseInt(target.value)
-      console.log("setUnits...", this.model.units)
+    setEpochs({target}){
+      this.model.epochs = parseInt(target.value)
+      console.log("setEpochs...", this.model.epochs)
     },
     setStep({target}){
       this.model.step = parseFloat(target.value)
@@ -219,9 +220,6 @@ export default {
         show:true,
         message:"Train the model..."
       }
-      //start timer
-      const startTime = new Date()
-      // debugger
       this.carData.map(rec=>{
         let fts=[]
         x.push(rec[labels])
@@ -230,25 +228,25 @@ export default {
         })
         y.push(fts)
       })
-
       const options={
         ...this.model,
         features: y,
         labels: x
       }
+      //start timer
+      const startTime = new Date()
 
       setTimeout(()=>{
-        train(options)
+        trainModel(options)
         .then(resp=>{
-          this.lineChartMSE(resp.mse)
-          delete resp.mse
+          this.lineChartMSE(resp.cost)
+          delete resp.cost
           this.training={
             time: new Date() - startTime,
             model:{
               ...resp
             }
           }
-          // console.log("fitLine reponse...", this.training)
         })
         .catch(resp=>{
           console.error("fitLine failed...", resp)
@@ -299,13 +297,15 @@ export default {
       }
       return {f:sample, l}
     },
-    testPredictions({weights}){
-      const s = weights.slopes.map(i=>i[0])
-      const w = [weights.const, ...s]
+    testPredictions({weights, activation}){
+      //select test sample
       const {f,l} = this.selectTestSample(this.testCases)
-
       //make predictions
-      const mpg = predict(f,w)
+      const mpg = predict({
+        features:f,
+        weights,
+        activation
+      })
 
       //chart predicted vs actual
       const val = mpg.map((v,i)=>{

@@ -4,6 +4,7 @@
  */
 function distinct(array=[]){
   const d = [...new Set(array)]
+  return d
 }
 
 export default distinct

@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs'
-import * as tfvis from '@tensorflow/tfjs-vis'
+import {scatterPlot} from "./tf-chart"
 
 /**
  * Creating linear model based on training
@@ -22,15 +22,11 @@ export function createLinearModel(units){
 
 export function drawScatterplot({name,tab,values,series},config){
   // debugger
-  tfvis.render.scatterplot(
+  scatterPlot(
     {name, tab},
     {values, series},
     {...config}
   );
-}
-
-export function visModel(model){
-  tfvis.show.modelSummary({name: 'Model Summary', tab:"Model"}, model);
 }
 
 /**
@@ -132,7 +128,7 @@ export function testModel(model, inputData, normalizationData) {
     x: d.horsepower, y: d.mpg,
   }));
 
-  tfvis.render.scatterplot(
+  scatterPlot(
     {
       name: 'Model Predictions vs Original Data',
       tab: "Model"
@@ -175,37 +171,37 @@ export function makePrediction(model,{inputMax, inputMin, labelMin, labelMax}){
   return predictedPoints
 }
 
-export function toggleVisor(){
-  tfvis.visor().toggle()
-}
+// export function toggleVisor(){
+//   tfvis.visor().toggle()
+// }
 
-export function lineChart({
-  name='Line chart',
-  tab='Line charts'},
-  {values, series},
-  config
-){
-  tfvis.render.linechart(
-    {name, tab},
-    {values, series},
-    config
-  );
-  return tfvis
-}
+// export function lineChart({
+//   name='Line chart',
+//   tab='Line charts'},
+//   {values, series},
+//   config
+// ){
+//   tfvis.render.linechart(
+//     {name, tab},
+//     {values, series},
+//     config
+//   );
+//   return tfvis
+// }
 
-export function scatterPlot({
-  name='Line chart',
-  tab='Line charts'},
-  {values, series},
-  config
-){
-  tfvis.render.scatterplot(
-    {name, tab},
-    {values, series},
-    config
-  );
-  return tfvis
-}
-export function historyChart(){
-  tfvis.show.history(surface, history, ['loss', 'acc']);
-}
+// export function scatterPlot({
+//   name='Line chart',
+//   tab='Line charts'},
+//   {values, series},
+//   config
+// ){
+//   tfvis.render.scatterplot(
+//     {name, tab},
+//     {values, series},
+//     config
+//   );
+//   return tfvis
+// }
+// export function historyChart(){
+//   tfvis.show.history(surface, history, ['loss', 'acc']);
+// }

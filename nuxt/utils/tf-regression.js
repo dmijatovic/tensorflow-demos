@@ -5,7 +5,8 @@ import {
   create2DTensor,
   gradientDescend,
   tuneLearningRate,
-  makePrediction
+  makePrediction,
+  classifyPrediction
 } from "./tf-utils"
 
 let features=[]
@@ -24,12 +25,9 @@ function getInfo(append={}){
     ...append,
     Rsq: R,
     // optimum,
-    weights: {
-      const:c[0],
-      slopes:s,
-      // epochStat
-    },
-    cost: epochStat.map(r=> r.cost)
+    weights: weights.arraySync(),
+    cost: epochStat.map(r=> r.cost),
+    tfMemory: tf.memory()
   }
   //remove data
   delete info.features
@@ -38,12 +36,14 @@ function getInfo(append={}){
 }
 
 function init(){
+  //clear tf memory
+  tf.dispose()
+  //save options
   options={
     step: 0.01,
     epochs: 100,
     treshold: 0.001,
-    sigmoid: true,
-    sigmoidTreshold: 0.5
+    activation:'mse'
   }
   features=[]
   labels=[]
@@ -71,49 +71,52 @@ try{
     ...options,
     ...config
   }
-  const {epochs, batchSize} = options
+  const {epochs, batchSize, activation} = options
+  //get initial learning rate
+  let step = options.step
   //create labels tensor
   labels = create2DTensor(config.labels)
   //create standardized features tensors
   features = standardizeFeatures(config)
   //create inital weights
   //these are constant and slope (richting coef.)
-  debugger
   weights = tf.zeros([features.shape[1],labels.shape[1]])
-  //get initial learning rate
-  let step = options.step
+
   //find the optimum
   for (let i=0; i<epochs; i++){
     // do one epoch / one pass
     let stats
-    // debugger
     if (batchSize){
       step = batchGradientDescend({
         features,
         labels,
         epoch:i,
         step,
-        batchSize
+        batchSize,
+        activation
       })
     }else{
       stats = gradientDescend({
         features,
         labels,
         weights,
-        step
+        step,
+        activation
       })
+      //update weights
+      weights = stats.weights
       //save epoch statistics
       saveEpochStats({
         epoch: i,
         ...stats
       })
+      // update learning rate based on cost history
+      step = tuneLearningRate({
+        epochStat,
+        step,
+        options
+      })
     }
-    // update learning rate based on MSE history
-    step = tuneLearningRate({
-      epochStat,
-      step,
-      options
-    })
     //check if we need to break
     if (step === 0) {
       //save how many runs we did
@@ -131,14 +134,15 @@ try{
   debugger
   console.error(e)
   const info = getInfo({err: e['message']})
-  rej(info)}
+  rej(info)
+}
 })}
 /**
  *
  * @param {Object} param0
  */
-function batchGradientDescend({features, labels, epoch, step=0.01, batchSize=50}){
-  const {sigmoid, sigmoidTreshold} = options
+function batchGradientDescend({features, labels, epoch, step=0.01,
+  batchSize=50, activation}){
   //calculate loop cycle
   const cycles = Math.floor(features.shape[0] / batchSize)
   //local help vars
@@ -154,7 +158,7 @@ function batchGradientDescend({features, labels, epoch, step=0.01, batchSize=50}
       labels:l,
       weights,
       step,
-      sigmoid
+      activation
     })
     //update weights
     weights = s.weights
@@ -166,7 +170,7 @@ function batchGradientDescend({features, labels, epoch, step=0.01, batchSize=50}
     })
     //update first rec position
     r1+= batchSize
-    // update learning rate based on MSE
+    // update learning rate based on cost history
     step = tuneLearningRate({
       epochStat,
       step,
@@ -189,17 +193,37 @@ function saveEpochStats(stats){
  * Calculate the goodness of fit of logistic model.
  */
 function accuracy(){
-  // debugger
-  const {sigmoid, sigmoidTreshold} = options
+  const {activation, sigmoidTreshold} = options
   // const ft = createTensor(features)
-  const predictions = makePrediction({
+  const rawPredictions = makePrediction({
     features,
     weights,
-    sigmoid,
-    sigmoidTreshold
+    activation
   })
+
+  switch(activation.toLowerCase()){
+    case "sigmoid":
+      return sigmoidAccuracy({
+        rawPredictions,
+        sigmoidTreshold
+      })
+    case "softmax":
+      return softmaxAccuracy(rawPredictions)
+    case "mse":
+    default:
+      return rSquared()
+  }
+}
+
+function sigmoidAccuracy({rawPredictions, sigmoidTreshold=0.5 }){
+
   const sampleSize = features.shape[0]
 
+  const predictions = classifyPrediction({
+    rawPredictions,
+    activation:'sigmoid',
+    sigmoidTreshold
+  })
   const wrong = predictions
     .sub(labels)
     .abs()
@@ -225,27 +249,85 @@ function accuracy(){
 
   return {
     acc,
+    activation:'sigmoid',
+    sigmoidTreshold,
     falsPositive,
     falsNegative
   }
 }
 
+function softmaxAccuracy(rawPredictions){
+  const sampleSize = features.shape[0]
+  const predictions = classifyPrediction({
+    rawPredictions,
+    activation:'softmax'
+  })
+
+  const lbl = labels.argMax(1)
+
+  const acc = predictions
+    .notEqual(lbl)
+    .sum()
+    .div(sampleSize)
+    .sub(1)
+    .abs()
+    .arraySync()
+
+  return{
+    acc,
+    activation:'softmax'
+  }
+}
+/**
+ * Calculate square root of R. This is goodness of fit for MSE.
+ */
+function rSquared(){
+  // debugger
+  // const ft = createTensor(features)
+  const predictions = features.matMul(weights)
+
+  const SSres = labels
+    .sub(predictions)
+    .square()
+    .sum()
+    .arraySync()
+
+  // const mean = features.mean()
+
+  const SStot = labels
+    .sub(labels.mean())
+    .square()
+    .sum()
+    .arraySync()
+
+  // debugger
+  const R = 1 - (SSres/SStot)
+  return R
+}
 /**
  * Make prediction for given features and the model
  * @param {Array} features to base prediction on
  * @param {Array} weights to use from logistic model
  */
-export function predict(features=[],weights=[],
-  sigmoid=true, sigmoidTreshold=0.5){
-  const ft = standardizeFeatures({features})
-  const w = tf.tensor2d(weights,[weights.length, 1])
-  const p = makePrediction({
-    features: ft,
-    weights: w,
-    sigmoid,
-    sigmoidTreshold
+export function predict({features=[], weights=[],
+  ...config}){
+  const {activation, sigmoidTreshold=0.5} = config
+  const prediction = tf.tidy(()=>{
+    debugger
+    const ft = standardizeFeatures({features})
+    const w = tf.tensor2d(weights,[weights.length, 1])
+    const rawPredictions = makePrediction({
+      features: ft,
+      weights: w,
+      activation
+    })
+    return classifyPrediction({
+      rawPredictions,
+      activation,
+      sigmoidTreshold
+    })
   })
-  return p.arraySync()
+  return prediction.arraySync()
 }
 
 export default trainModel

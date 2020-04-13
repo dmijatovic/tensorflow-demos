@@ -1,8 +1,10 @@
 
 const loadCSV = require('./utils/load-csv')
-
+const tf = require("@tensorflow/tfjs")
 
 const file = './data/kc_house_data.csv'
+
+console.log("backend...", tf.backend())
 
 const config={
   shuffle:true,

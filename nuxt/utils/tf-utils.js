@@ -28,25 +28,32 @@ export function create2DTensor(f=[]){
  * @param {Object} config - features
  */
 export function standardizeFeatures({features}){
-  // debugger
-  //create features tensors
-  const feat = create2DTensor(features)
-  //create tensor with onces for constant
-  const ones =  tf.ones([features.length, 1])
-  //concatenate two tensors
-  const axis = 1;
-  const fset = tf.concat([
-    ones,
-    feat
-  ], axis)
+  // memory cleanup
+  return tf.tidy(()=>{
+    //create features tensors
+    //debugger
+    const feat = create2DTensor(features)
+    //create tensor with ones for constant
+    const ones =  tf.ones([features.length, 1])
+    //concatenate two tensors
+    const axis = 1;
+    const fset = tf.concat([
+      ones,
+      feat
+    ], axis)
 
-  //standardize values to -1 to +1
-  const {mean, variance} = tf.moments(fset,0)
-  const fstd = fset
-    .sub(mean)
-    .div(variance.sqrt())
-  // returned standardized features tensor
-  return fstd
+    //standardize values to -1 to +1
+    const {mean, variance} = tf.moments(fset,0)
+    // debugger
+    // eplace all 0 variable values with 1 to avoid division by 0 = NaN problem
+    // const corrector = variance.cast('bool').logicalNot().cast('float32')
+    // variance.add(corrector)
+    const fstd = fset
+      .sub(mean)
+      .div(variance.sqrt())
+    // returned standardized features tensor
+    return fstd
+  })
 }
 /**
  * Gradien descent calculation. Supports both linear and logistic regression model.
@@ -55,50 +62,53 @@ export function standardizeFeatures({features}){
  * @param {Tensor2d} labels dependent variables
  * @param {Tensor2d} weights current weights to apply (contant + slopes)
  * @param {Float} step learning rate
- * @param {Boolean} sigmoid use sigmoid fn to convert estimates to values between 0 and 1
- * @param {Float} sigmoidTreshold value when false breaks to true
+ * @param {String} activation values 'sigmoid', 'softmax', 'mse', default is mse
+ * @param {Float} sigmoidTreshold value when false breaks to true when activation type is sigmoid
  */
-export function gradientDescend({features, labels, weights, step=0.01,
-  sigmoid=false, sigmoidTreshold=null}){
-  // debugger
-  // make predictions based on current weights
-  let predictions = makePrediction({features,weights,sigmoid,sigmoidTreshold})
-  // calculate deviation from actual = error
-  const errPredictions = predictions.sub(labels)
-  // use features size as sample size
-  const sampleSize = features.shape[0]
-  // calculate costs
-  let cost
-  if (sigmoid){
-    //Cross Entropy error/cost calculation
-    cost = calcCrossEntropy({
-      labels,
-      guesses: predictions,
-      sampleSize
-    })
-  }else {
-    //MSE cost calculation
-    cost =  calcMSE({
-      errPredictions,
-      sampleSize
-    })
-  }
-  // calculate gross weight correction using matrix multiplication
-  const grossWeightsCorrection = features
-    .transpose()
-    .matMul(errPredictions)
-    .div(sampleSize)
+export function gradientDescend({features, labels, weights,
+  ...options}){
+  let {activation, step } = options
+  //use tidy to free TF memory of temp used tensors
+  return tf.tidy(()=>{
+    // if (!activation) throw new Error("Activation type not provided")
+    // make predictions based on current weights
+    let predictions = makePrediction({features,weights,activation})
+    // calculate deviation from actual = error
+    const errPredictions = predictions.sub(labels)
+    // use features size as sample size
+    const sampleSize = features.shape[0]
+    // calculate costs
+    let cost
+    if (activation.toLowerCase()==='mse'){
+      //MSE cost calculation
+      cost =  calcMSE({
+        errPredictions,
+        sampleSize
+      })
+    }else{
+      //Cross Entropy error/cost calculation
+      cost = calcCrossEntropy({
+        labels,
+        predictions,
+        sampleSize
+      })
+    }
+    // calculate gross weight correction using matrix multiplication
+    const grossWeightsCorrection = features
+      .transpose()
+      .matMul(errPredictions)
+      .div(sampleSize)
 
-  const netWeightsCorrection = grossWeightsCorrection.mul(step)
-
-  weights = weights.sub(netWeightsCorrection)
-
-  return {
-    cost,
-    step,
-    weights,
-    grossWeightsCorrection: grossWeightsCorrection.arraySync()
-  }
+    const netWeightsCorrection = grossWeightsCorrection.mul(step)
+    const newWeights = weights.sub(netWeightsCorrection)
+    // debugger
+    return {
+      step,
+      cost,
+      weights: newWeights,
+      grossWeightsCorrection: grossWeightsCorrection.arraySync()
+    }
+  })
 }
 /**
  * Make predictions based on provided features and weights. Supports linear
@@ -106,31 +116,36 @@ export function gradientDescend({features, labels, weights, step=0.01,
  * If sigmoid is true and sigmoidTreshold is not provided delivers raw sigmoid values
  * @param {Tensor2d} features the independent variables
  * @param {Tensor2d} weights current weights to apply (contant + slopes)
- * @param {Boolean} sigmoid use sigmoid fn to convert estimates to values between 0 and 1, default FALSE
- * @param {Float} sigmoidTreshold value when false breaks to true, default NULL
+ * @param {String} activation Fn to use, values 'sigmoid', 'softmax' or 'mse, default is MSE *
  */
-export function makePrediction({features, weights, sigmoid=false, sigmoidTreshold=null}){
-  let currentGuess
+export function makePrediction({features, weights, activation}){
   // debugger
-  if (sigmoid){
-    // debugger
-    currentGuess = features
-      .matMul(weights)
-      .sigmoid()
-
-    if (sigmoidTreshold){
-      // debugger
-      currentGuess = currentGuess
-        .greater(sigmoidTreshold)
-        .cast('float32')
-    }
-  }else{
-    currentGuess = features
-      .matMul(weights)
+  if (!activation) throw new Error("makePrediction: Activation type not provided")
+  // apply weights to features
+  let currentGuess = features
+    .matMul(weights)
+  // apply additional activation fn
+  // mainly for logistic regression models
+  switch (activation.toLowerCase()){
+    case "sigmoid":
+      // apply sigmoid Fn to prediction
+      return currentGuess
+        .sigmoid()
+    case "softmax":
+      // apply softmax Fn to prediction
+      return currentGuess
+        .softmax()
+    case "mse":
+    default:
+      return currentGuess
   }
-  return currentGuess
 }
-
+/**
+ * Calculate MSE (mean-square-error). Used for linear regression models.
+ * @param {Tensor} errPredictions tensor with difference (actual - prediction) = error of prediction
+ * @param {Number} sampleSize sample size
+ * @returns {Number} mean squared error (single) float value
+ */
 function calcMSE({errPredictions, sampleSize}){
   // square it, sumit and divide by sample size
   const mse = errPredictions
@@ -140,9 +155,15 @@ function calcMSE({errPredictions, sampleSize}){
       .arraySync()
   return mse
 }
-function calcCrossEntropy({labels, guesses, sampleSize}){
+/**
+ * Calculate Cross Entropy cost fn. It is used with logistic regression models.
+ * @param {Tensor} labels tensor with actual labels from training set
+ * @param {Tensor}  predictions tensor with predictions made
+ * @param {Number} sampleSize sample size
+ */
+function calcCrossEntropy({labels, predictions, sampleSize}){
   // debugger
-  const min1LogGuesses = guesses
+  const min1LogPredictions = predictions
     .mul(-1)
     .add(1)
     .log()
@@ -154,19 +175,30 @@ function calcCrossEntropy({labels, guesses, sampleSize}){
 
   const transposeLabels = labels
     .transpose()
-  const logGuesses = guesses.log()
-  const first = transposeLabels.matMul(logGuesses)
+  const logPredictions = predictions.log()
+  const first = transposeLabels.matMul(logPredictions)
 
   const second = min1TransposeLabels
-    .matMul(min1LogGuesses)
+    .matMul(min1LogPredictions)
 
-  const res = first
+  const tot = first
     .add(second)
     .div(sampleSize)
     .mul(-1)
-    .arraySync()
 
-  return res
+  // debugger
+  if (tot.size > 1){
+    //sum devitations for multivariate analyses
+    //per column and take first item (all items should have same value)
+    const res = tot
+      .sum(0)
+      .bufferSync()
+      .get(0)
+    return res
+  } else {
+    return tot
+      .arraySync()
+  }
 }
 /**
  * Calculate optimal learning rate.
@@ -204,7 +236,7 @@ export function tuneLearningRate({epochStat, step, options}){
       }
     } else if (pre.cost > cur.cost) {
       // current error is smaller
-      return cur.step * 1.25
+      return cur.step * 1.05
     } else {
       // equal cost in two runs
       // is this optimum (local minimum?!?)
@@ -236,6 +268,28 @@ function optimalMinimum({grossWeightsCorrection},{treshold}){
     return true
   } else {
     return false
+  }
+}
+/**
+ * Classify raw predictions. This is usefull for logistic regression models.
+ * @param {Tensor2d} rawPrediction tensor with raw prediction (weights applied)
+ * @param {String} activation Fn to use, values 'sigmoid', 'softmax' or 'mse, default is MSE *
+ * @param {Float} sigmoidTreshold value when false breaks to true when using sigmoid algorithm, default NULL
+ */
+export function classifyPrediction({rawPredictions, ...options}){
+  const {activation, sigmoidTreshold=0.5} = options
+  // debugger
+  switch (activation.toLowerCase()){
+    case "sigmoid":
+      return rawPredictions
+        .greater(sigmoidTreshold)
+        .cast('float32')
+    case "softmax":
+      return rawPredictions
+        .argMax(1)
+    case "mse":
+    default:
+      return rawPredictions
   }
 }
 

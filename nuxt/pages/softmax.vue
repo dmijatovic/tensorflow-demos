@@ -1,18 +1,18 @@
 <template>
   <PageContent>
     <template #page-title>
-      <h1>Logistic regression using Sigmoid</h1>
+      <h1>Logistic regression with Softmax</h1>
       <nav>
-        <dv4-custom-button
+        <!-- <dv4-custom-button
           @click="selectModel('Low_CO2_Emission')"
           >
           Emission model
-        </dv4-custom-button>
-        <!-- <dv4-custom-button
+        </dv4-custom-button> -->
+        <dv4-custom-button
           @click="selectModel('Fuel_Efficiency')"
           >
           Fuel eff. model
-        </dv4-custom-button> -->
+        </dv4-custom-button>
         <dv4-custom-button
           @click="chartPanel"
           primary
@@ -29,10 +29,14 @@
     </template>
     <template #page-body>
       <p>
-        Logistical regression uses sigmoid function to produce outcomes
-        between 0 and 1. The priniciple of MSE calculation is similair.
-        The difference is that output of "linear" equasion is plugged into
-        Sigmoid function: 1 / (1 + e ** value from linear regression equasion).
+        This example of logistical regression uses softmax function to produce
+        outcomes that map to categorical values. The priniciple of calculation is:
+        <ul>
+          <li>All variable categories are broken to binomial (true/false) values</li>
+          <li>For cost calculation we use cross entropy function</li>
+          <li>The weights are calculated per catgory</li>
+          <li>For final outcome we apply softmax that will provide weighted changes for each of categories</li>
+        </ul>
       </p>
       <p>
           To train the model cars data with {{carData.length}} records is used.
@@ -73,7 +77,7 @@
             @onChange="setStep"
           >
           </dv4-text-input>
-          <dv4-text-input
+          <!-- <dv4-text-input
             class="param-input"
             name="sigmoid-treshold"
             label="Sigmoid Treshold"
@@ -81,7 +85,7 @@
             :value="model.sigmoidTreshold"
             @onChange="setTreshold"
           >
-          </dv4-text-input>
+          </dv4-text-input> -->
           <dv4-text-input
             class="test-input"
             name="test-cases"
@@ -136,10 +140,9 @@ export default {
         step: 0.125,
         treshold: 0.002,
         batchSize: 50,
-        activation:'sigmoid',
-        sigmoidTreshold:0.5,
+        activation:'softmax',
         features:['Horsepower','Weight_in_lbs','Cylinders','YYYY'],
-        labels:'Low_CO2_Emission'
+        labels:'Fuel_Efficiency'
       },
       training:{
         time: 0,
@@ -222,6 +225,7 @@ export default {
       setTimeout(()=>{
         trainModel(options)
         .then(resp=>{
+          debugger
           this.lineChartCostFn(resp.cost, options['activation'])
           delete resp.cost
           this.training={
@@ -283,8 +287,10 @@ export default {
     },
     testPredictions(){
       // debugger
-      const { activation, sigmoidTreshold } = this.model
+      const { activation } = this.model
       const { weights } = this.training.model
+      // const s = weights.slopes.map(i=>i[0])
+      // const w = [weights.const, ...s]
 
       const {f,l} = this.selectTestSample(this.testCases)
 
@@ -293,8 +299,7 @@ export default {
       const prediction = predict({
         features:f,
         weights,
-        activation,
-        sigmoidTreshold
+        activation
       })
 
       this.scatterPlotPrediction({
@@ -304,7 +309,8 @@ export default {
       // console.log("MPG: ", mpg.toString())
     },
     scatterPlotPrediction({prediction, actual}){
-       //chart predicted vs actual
+      //chart predicted vs actual
+      debugger
       const val = prediction.map((v,i)=>{
         return {
           x:i,
@@ -319,7 +325,7 @@ export default {
       })
       //draw scatterplot
       scatterPlot(
-        {name:"Test predictions",tab:"Sigmoid"},
+        {name:"Test predictions",tab:"Softmax"},
         {
           values: [val,lbl],
           series:['prediction','actual']
