@@ -10,3 +10,13 @@
   background-color: transparent;
 }
 
+.side-panel{
+  display: flex;
+  width: 12rem;
+  flex-direction: column;
+  padding: 1rem 1rem 0.5rem 0rem;
+}
+
+.side-panel dv4-custom-button{
+  margin-bottom: 0.5rem;
+}

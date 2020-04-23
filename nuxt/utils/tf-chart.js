@@ -36,6 +36,12 @@ export function historyChart(){
   tfvis.show.history(surface, history, ['loss', 'acc']);
 }
 
-export function visModel(model){
-  tfvis.show.modelSummary({name: 'Model Summary', tab:"Model"}, model);
+export function visModel({model, ...options}){
+  // {name: 'Model Summary', tab:"Model"}
+  tfvis.show.modelSummary({...options}, model);
+}
+
+export function visLayer({layer, ...options}){
+  // {name: 'Model Summary', tab:"Model"}
+  tfvis.show.layer({...options}, layer);
 }

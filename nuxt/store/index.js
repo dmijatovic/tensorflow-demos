@@ -1,10 +1,12 @@
 export const state=()=>({
-  loading:false
+  loader:{
+    show: false,
+    message: "Loading..."
+  },
 })
 
 export const mutations={
-  setLoading(state, action){
-    const {payload} = action
-    state.loading = payload
+  setLoader(state, payload){
+    state.loader = payload
   }
 }

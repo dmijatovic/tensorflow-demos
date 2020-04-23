@@ -35,6 +35,8 @@ export default {
       if (r.path==='/'){
         r.name='Home'
         return r
+      } else if (!r.name){
+        r.name = r.path.toString().replace("/","")
       }
       return r
     })
@@ -62,10 +64,10 @@ export default {
 .app-footer{
   display: flex;
   padding: 0rem 2rem;
+  flex-wrap: wrap;
 }
 
 .app-header{
-  display: flex;
   justify-content: space-between;
   align-items: stretch;
   border-bottom: 1px solid var(--color-grey,#eee);
@@ -85,15 +87,25 @@ export default {
   padding: 0rem 1rem;
 }
 
+.nuxt-link-active:not([href="/"]),
 .nuxt-link-exact-active{
   font-weight: 700;
   background-color:var(--link-active-color, #E8EDEE);
 }
 
+
 .app-footer{
   background-color: var(--footer-bg-color, #333);
   color: var(--footer-tx-color, #fff);
   padding: 1rem 2rem;
+}
+
+.page-body{
+  display: flex;
+}
+
+article{
+  width:100%;
 }
 
 </style>

@@ -293,3 +293,14 @@ export function classifyPrediction({rawPredictions, ...options}){
   }
 }
 
+/**
+ * Create dense tensorflow layer. Dense layer is fully connected layer.
+ * First layer of the model need to be input layer.
+ * Input layer has inputDim defined (number of features).
+ * @param {Object} args
+ */
+export function createDenseLayer(args){
+  return tf.layers.dense(args)
+}
+
+

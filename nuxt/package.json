@@ -12,9 +12,9 @@
     "test": "jest"
   },
   "dependencies": {
-    "@dv4all/icons": "^0.5.4",
-    "@dv4all/loaders": "^0.4.2",
-    "@dv4all/web-components": "^0.7.1",
+    "@dv4all/icons": "^0.6.1",
+    "@dv4all/loaders": "^0.4.4",
+    "@dv4all/web-components": "^0.9.1",
     "@tensorflow-models/mobilenet": "^2.0.4",
     "@tensorflow/tfjs": "^1.7.2",
     "@tensorflow/tfjs-vis": "^1.4.0",
