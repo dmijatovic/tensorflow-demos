@@ -33,28 +33,17 @@ export default {
       default:null
     }
   },
-  // data(){
-  //   return {
-  //     epochs:null,
-  //     batchSize:null
-  //   }
-  // },
-  // computed:{
-  //   ...mapState("model/options",[
-  //     'training'
-  //   ]),
-  // },
   methods:{
     setOption({target,item,type}){
-      this[item] = formatValue(type,target.value)
-      this.emitChange()
-    },
-    emitChange(){
       const {epochs, batchSize} = this
       const data={
         epochs,
         batchSize
       }
+      data[item] = formatValue(type,target.value)
+      this.emitChange(data)
+    },
+    emitChange(data){
       this.$emit("onChange",data)
     }
   }

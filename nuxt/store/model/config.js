@@ -1,7 +1,6 @@
 export const state=()=>({
   epochs: 20,
   batchSize: 64,
-  layers:[],
   optimizer:{
     type:'sgd',
     args:[{
@@ -16,9 +15,9 @@ export const state=()=>({
     type:"meanSquaredError",
     args:null
   },
-  features:['Horsepower','Weight_in_lbs','Cylinders','YYYY'],
-  // features:['Horsepower'],
-  labels:'Miles_per_Gallon'
+  layers:[],
+  label:'Miles_per_Gallon',
+  features:['Horsepower','Weight_in_lbs','Cylinders','YYYY']
 })
 
 export const mutations={
@@ -34,11 +33,11 @@ export const mutations={
     state.batchSize = payload
   },
   addLayerDef(state, payload){
-    debugger
+    // debugger
     state.layers.push(payload)
   },
   deleteLayerDef(state, payload){
-    debugger
+    // debugger
     state.layers.splice(payload, 1)
     // console.log("layers...", state.layersDef)
   },
@@ -49,5 +48,33 @@ export const mutations={
   setLoss(state,payload){
     // debugger
     state.loss = payload
+  },
+  setFeatures(state,payload){
+    state.features = payload
+  },
+  setLabel(state,payload){
+    state.label = payload
+  }
+}
+
+export const getters={
+  canCreateModel(state){
+    // debugger
+    const {epochs,batchSize,optimizer,loss,layers,features,label} = state
+    try{
+      if (!epochs) return false
+      if (!batchSize) return false
+      if (!optimizer.type) return false
+      if (!loss.type) return false
+      if (layers.length===0) return false
+      if (features.length===0) return false
+      if (!label) return false
+      return true
+    }catch(e){
+      return false
+    }
+  },
+  getModelConfig(state){
+    return state
   }
 }

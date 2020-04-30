@@ -1,16 +1,17 @@
-import * as tf from '@tensorflow/tfjs'
-import { saveModelToLS, loadModelFromLS, standardizeValues } from "../../utils/tf-data"
+// import * as tf from '@tensorflow/tfjs'
+import * as tfmodel from "../../utils/tf-model"
+import { saveModelToLS, loadModelFromLS,
+  standardizeValues } from "../../utils/tf-data"
 import { create2DTensor } from '../../utils/tf-utils'
 
-//Tensorflow model object needs to be outside of state
-//because of vuex observers
-let tfModel = null
-
 export const state=()=>({
-  status: "idle",
   name: "",
-  info: null,
-  trainingStats: null,
+  createdAt: null,
+  stadium: "new",
+  training:{
+    timeSpend: 0,
+    trainedAt: null,
+  }
 })
 
 export const actions={
@@ -38,88 +39,46 @@ export const actions={
       console.log("No model saved to load")
     }
   },
-  createSequentialModel({state,commit},{payload}){
-    const {layersDef, layersDef:{[0]:firstLayer}} = state
-    const losses=[]
-    // console.log("Create model...", state.layersDef)
-    const layers = layersDef.map((layer, pos)=>{
-      // debugger
-      if (pos===0){
-        //first layer should indicate how many
-        //features we use as input
-        layer['inputShape'] = payload['inputShape']
-      }
-      losses.push(layer.loss)
-      //create dense layer
-      return tf.layers.dense({
-        ...layer
-      })
-    })
-    // console.log("Layers...", layers)
-    // create model with layers
-    const model = tf.sequential()
+  /**
+   * Create sequential model using tensorflow.js
+   * @param {Object} context
+   * @param {Object} action.payload
+   * @returns {Object} model Tensorflow model object/tensor
+   */
+  async createSequentialModel({state,commit},{payload}){
     // debugger
-    // add layers to model
-    layers.map(layer=>{
-      model.add(layer)
-    })
-    //compile model
-    //debugger
-    //https://js.tensorflow.org/api/latest/#tf.LayersModel.compile
-    model.compile({
-      optimizer: firstLayer.optimizer,
-      loss: firstLayer.loss,
-    })
-    //save model
-    tfModel = model
-    //set model flag
-    commit("setModel", true)
-    //remove training time
-    commit(
-      "model/options/setTrainingOptions",
-      {item:'timeSpent',value:0},
-      {root:true}
-    )
+    const model = tfmodel.createSequentialModel(payload)
+    commit("setTrainingTimeSpend", 0)
+    return model
   },
-  async trainModel({state,commit, dispatch},{payload}){
+  async trainModel({commit, dispatch},{payload}){
     //commit to loading
-    commit("setLoader", {show:true,message:"Training..."},{ root: true })
+    if (tfmodel.modelExist===false) throw new Error("Create model first")
+    const tfModel = tfmodel.getModel()
     //start time
     const startTime = new Date()
     //training arguments
     const {args} = payload
+    // debugger
     //feature and label tensors
     const {features, labels} = await dispatch("createTensors", payload)
+    // debugger
     //training
     const stats = await tfModel.fit(features, labels, args)
+    // debugger
     //time taken
-    const trainingTime = new Date() - startTime
-    stats['trainingTime'] = trainingTime
-    //log data source
+    const trainingEnd = new Date()
+    const trainingTime = trainingEnd - startTime
+    stats['timeSpend'] = trainingTime
+    stats['trainedAt'] = trainingEnd
+    // log data source
     stats['source'] = 'model/trainModel'
-    //update training time
-    commit(
-      "model/options/setTrainingOptions",
-      {item:'timeSpent',value:trainingTime},
-      {root:true}
-    )
-    //save stats
-    commit("setTrainingStats", stats)
-    //plot loss chart
-    dispatch({
-      type: "model/visor/plotTrainingLoss",
-      payload: {
-        ...stats.history,
-        name:"Model loss",
-        tab:"Model"
-      }},{root:true}
-    )
-    //return stats
     return stats
   },
   async createTensors({state},{data=[], label="", features=[]}){
     const f=[], l=[]
-
+    // debugger
+    if (data.length===0) throw new Error("model.createTensors: data array is empty!")
     data.map(rec=>{
       let fts=[]
       l.push(rec[label])
@@ -129,11 +88,10 @@ export const actions={
       f.push(fts)
     })
 
+    if (f.length===0) throw new Error("model.createTensors: features array is empty!")
+    if (l.length===0) throw new Error("model.createTensors: labels array is empty!")
     const ft = standardizeValues(f)
     const lb = create2DTensor(l)
-
-    state['label'] = label
-    state['features'] = features
 
     return{
       features: ft,
@@ -146,55 +104,64 @@ export const mutations={
   setModelName(state, payload){
     state.name = payload
   },
-  setStatus(state, action){
-    const {payload} = action
-    state.status = payload
+  setModelStadium(state, payload){
+    state.stadium = payload
   },
   saveModel(state, payload){
+    // debugger
+    const {name, model} = payload
+    tfmodel.setModel(model)
     state.name = name
-    state.tfModel = model
+    state.stadium = "created"
+    state.createdAt = new Date()
   },
-  setModel(state, payload){
-    //set flag
-    state.model = payload
+  setTrainingTimeSpend(state,payload){
+    state.training.timeSpend = payload
+  },
+  addTrainingTimeSpend(state,payload){
+    state.training.timeSpend += payload
   },
   setTrainingStats(state, payload){
-    state.trainingStats = payload
+    state.training = payload
   }
 }
 
 export const getters={
-  // getLayersInfo(state){
-  //   const {layersDef} = state
-  //   const li = layers.map(layer=>{
-  //     debugger
-  //     console.log("layer...", layer)
-  //     return {
-  //       name: layer.name,
-  //       units: layer.units,
-  //       useBias: layer.useBias,
-  //       activation: layer.activation,
-  //       losses: layer.losses,
-  //       weights: layer.weights,
-  //     }
-  //   })
-  //   debugger
-  //   return li
-  // },
-  tfModelExists(){
-    if (tfModel){
-      return true
-    } else {
-      return false
+  modelExist(state){
+    return tfmodel.modelExist()
+  },
+  getModel(state){
+    return tfmodel.getModel()
+  },
+  getModelInfo(state){
+    const {name,createdAt,stadium} = state
+    // debugger
+    return{
+      name,
+      createdAt,
+      stadium
     }
   },
-  getTensorFlowModel(){
-    return tfModel
+  getTrainingInfo(state){
+    const {training} = state
+    let acc=[], loss=[]
+    if (training && training.history){
+      acc = training.history?.acc
+      loss = training.history?.loss
+    }
+    return {
+      timeSpend: training.timeSpend,
+      maxAccuracy: acc.reduce((max,val)=>{
+        if (max === null || max < val) {
+          return Math.round(val*10000)/10000
+        } else {
+          return max
+        }
+      }, null),
+      lossRange:[
+        loss.length > 0 ? Math.round(loss[0]*10000)/10000 : null,
+        loss.length > 0 ? Math.round(loss[loss.length-1]*10000)/10000 : null,
+      ]
+    }
   }
-  // itemIsInStore: state =>{
-  //   return (item)=>{
-  //     const path = item.split("/")
-  //     return state.hasOwnProperty(item)
-  //   }
-  // }
 }

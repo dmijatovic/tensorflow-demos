@@ -28,6 +28,7 @@ export const actions={
     }
     //create line chart
     commit("lineChart",{name,tab,values,series, config})
+    return true
   }
 }
 

@@ -17,7 +17,8 @@
         <div>
           <DataInfo
             v-if="data"
-            :dataInfo="dataInfo"/>
+            :dataInfo="dataInfo"
+          />
         </div>
         <section>
           <nuxt-child/>
@@ -60,14 +61,14 @@ export default {
             inputShape:[1]
           }
         },
-        disabled: true
+        disabled: !this.createModelEnabled
       },{
         label:"Train model",
         action:{
           type:"model/trainModel",
           payload:{}
         },
-        disabled: true
+        disabled: !this.trainModelEnabled
       }]
     }
   },
@@ -76,30 +77,26 @@ export default {
       'loader'
     ]),
     ...mapState('binary',[
-      'label',
-      'features',
-      'data'
+      'data','createModelEnabled',
+      'trainModelEnabled'
     ]),
     ...mapGetters('binary',[
       'dataInfo'
     ]),
-    ...mapState('model/options',[
-      'training',
-      'activations',
-      'optimizers',
-      'losses'
-    ]),
-    ...mapState('model/config',[
-      'layers'
-    ]),
-    ...mapState('model',[
-      'model',
-      'trainingStats'
+    ...mapGetters('model/config',[
+      'getModelConfig'
     ])
   },
-  watchers:{
-    trainingStats(){
-      console.log("Training stats...changed", this.trainingStats)
+  watch:{
+    createModelEnabled(value, previous){
+      // debugger
+      console.log("watch.createModelEnabled...changed")
+      this.nav[1].disabled = !value
+    },
+    trainModelEnabled(value, previous){
+      // debugger
+      console.log("watch.trainModelEnabled...changed")
+      this.nav[2].disabled = !value
     }
   },
   mounted(){
@@ -111,94 +108,97 @@ export default {
       this.$store.dispatch('binary/getCarsData')
       .then(res=>{
         console.log("Data loaded...")
-        this.enableCreateModel()
-        this.enableTrainModel()
+        // this.enableCreateModel()
+        // this.enableTrainModel()
       })
     },
-    setOptions({target,item, value}){
-      switch(target){
-        case "training":
-          this.$store.commit("model/options/setTrainingOptions",{item,value})
-          break;
-        case "activation":
-          debugger
-          this.$store.commit("setTrainingOptions",{item,value})
-      }
-      console.log("setOption..", target, item, value)
-    },
-    addDenseLayer(layer){
-      const {featuresList} = this.dataInfo
-      const args = {
-        ...layer,
-        useBias:true
-      }
-      this.$store.commit("model/addLayerDef", args)
-      this.enableCreateModel()
-    },
-    deleteLayer(pos){
-      this.$store.commit("model/deleteLayerDef", pos)
-      this.enableCreateModel()
-    },
     navClick(action){
-      const {dataInfo, label, features, data, training} = this
       // console.log("navClick...action...", action)
       switch(action.type){
         case "model/createSequentialModel":
-          action.payload = {
-            name:'binary-cars-model',
-            inputShape: [dataInfo.featuresList.length]
-          }
+          this.createModel()
           break;
         case "model/trainModel":
-          action.payload={
-            label: label.target,
-            features: dataInfo.featuresList,
-            data,
-            args:{
-              epochs: training.epochs,
-              batchSize: training.batchSize,
-              callbacks:{
-                onEpochEnd: this.onEpochEnd,
-                onTrainEnd: this.onTrainEnd
-              }
+          // action.payload = this.getTrainModelActionPayload()
+          this.trainModel()
+          break;
+        default:
+          this.$store.dispatch(action)
+      }
+    },
+    createModel(){
+      const {layers, optimizer,loss,features} = this.getModelConfig
+      const {dispatch,commit} = this.$store
+      // debugger
+      dispatch({
+        type:"model/createSequentialModel",
+        payload:{
+          name:'Binary classification',
+          layersDef: layers,
+          optimizerDef: optimizer,
+          lossDef: loss,
+          metrics: ['accuracy'],
+          inputShape:[features.length]
+        }
+      }).then(model=>{
+        commit("model/saveModel", {
+          name:"Binary model",
+          model
+        })
+        commit("binary/setTrainModelEnabled",true)
+      }).catch(e=>{
+        console.error(e)
+        commit("binary/setTrainModelEnabled",false)
+      })
+    },
+    trainModel(){
+      const {label, features, epochs, batchSize} = this.getModelConfig
+      const {dispatch,commit} = this.$store
+      const action={
+        type: "model/trainModel",
+        payload:{
+          label,
+          features,
+          data: this.data,
+          args:{
+            epochs,
+            batchSize,
+            callbacks:{
+              onEpochEnd: this.onEpochEnd,
+              onTrainEnd: this.onTrainEnd
             }
           }
-          break;
+        }
       }
-      this.$store.dispatch(action)
-        .then(resp=>{
-          if (resp) this.onActionResponse(resp)
-          this.enableCreateModel()
-          this.enableTrainModel()
+      commit("setLoader", {show:true,message:"Training..."},{ root: true })
+      dispatch(action)
+        .then(stats =>{
+          const {history} = stats
+          commit("model/setTrainingStats", stats)
+          commit("model/setModelStadium", "trained")
+          dispatch({
+            type: "model/visor/plotTrainingLoss",
+            payload: {
+              ...history,
+              name:"Model loss",
+              tab:"Model"
+            }
+          })
         })
         .catch(e=>{
           console.error(e)
-          this.$store.commit("setLoader",{
+        })
+        .finally(()=>{
+          commit("setLoader",{
             show:false,
             message:''
           })
         })
     },
-    enableCreateModel(){
-      const {layers, dataInfo} = this
-      // debugger
-      if (layers && layers.length > 0){
-        this.nav[1].disabled = false
-      } else {
-        this.nav[1].disabled = true
-      }
-    },
-    enableTrainModel(){
-      // debugger
-      if (this.model){
-        this.nav[2].disabled = false
-      } else {
-        this.nav[2].disabled = true
-      }
-    },
     onEpochEnd(epoch,logs){
       // console.log("onEpochEnd...", epoch, logs)
-      const {epochs} = this.training
+      const {epochs} = this.getModelConfig
+      // debugger
       this.$store.commit("setLoader",{
         show: true,
         message: `Epoch...${epoch+1}/${epochs}`
@@ -212,9 +212,61 @@ export default {
         message:''
       })
     },
-    onActionResponse(resp){
-      console.log("onActionResponse...", resp)
-    }
+    // enableCreateModel(){
+    //   debugger
+    //   if (this.canCreateModel){
+    //     this.nav[1].disabled = false
+    //   } else {
+    //     this.nav[1].disabled = true
+    //   }
+    // },
+    // enableTrainModel(){
+    //   // debugger
+    //   this.nav[2].disabled = true
+    //   // if (this.model){
+    //   //   this.nav[2].disabled = false
+    //   // } else {
+    //   //   this.nav[2].disabled = true
+    //   // }
+    // },
+    // getTrainModelActionPayload(){
+    //   debugger
+    //   const {dataInfo, label, features,
+    //     data, epochs, batchSize } = this
+    //   const payload={
+    //     label,
+    //     features,
+    //     data,
+    //     args:{
+    //       epochs,
+    //       batchSize,
+    //       callbacks:{
+    //         onEpochEnd: this.onEpochEnd,
+    //         onTrainEnd: this.onTrainEnd
+    //       }
+    //     }
+    //   }
+    //   return payload
+    // },
+    // onEpochEnd(epoch,logs){
+    //   // console.log("onEpochEnd...", epoch, logs)
+    //   const {epochs} = this.training
+    //   this.$store.commit("setLoader",{
+    //     show: true,
+    //     message: `Epoch...${epoch+1}/${epochs}`
+    //   })
+    // },
+    // onTrainEnd(logs){
+    //   console.log("onTrainEnd...", logs)
+    //   // debugger
+    //   this.$store.commit("setLoader",{
+    //     show:false,
+    //     message:''
+    //   })
+    // },
+    // onActionResponse(resp){
+    //   console.log("onActionResponse...", resp)
+    // }
   }
 }
 </script>

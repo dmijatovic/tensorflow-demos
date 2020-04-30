@@ -24,7 +24,7 @@
           type="checkbox"
           id="useBias"
           name="useBias"
-          :value="layer.useBias"
+          :checked="layer.useBias"
           @change="toggleBias"
           />
         <label for="useBias">
@@ -55,7 +55,7 @@ export default {
         // Positive integer, dimensionality of the output space.
         units: null,
         // Whether to apply a bias.
-        useBias:true
+        useBias: false
       }
     }
   },
@@ -64,8 +64,9 @@ export default {
       'getActivationOptions'
     ]),
     disableAddBtn(){
-      if (!this.layer.activation) return true
-      if (!this.layer.units) return true
+      if (this.layer.activation===null) return true
+      if (this.layer.activation==="-1") return true
+      if (this.layer.units===null) return true
       return false
     }
   },
@@ -75,22 +76,31 @@ export default {
     },
     toggleBias({target}){
       // debugger
-      // console.log("toggleBias...", target.value)
-      this.layer.useBias = formatValue("boolean",target.value)
+      // console.log("toggleBias...", target.checked)
+      this.layer.useBias = target.checked
+    },
+    validData(){
+      if (this.layer.activation==="-1") return false
+      if (this.layer.units === null) return false
+      return true
     },
     addLayer(){
+      if (this.disableAddBtn===true) return
       // console.log("Add layer to model", this.layer)
       const layer={
         ...this.layer
       }
-      this.resetData()
       this.$emit("addLayer", layer)
+      // this.resetData()
     },
-    resetData(){
-      this.layer.activation="select one"
-      this.layer.units = null
-      this.layer.useBias = false
-    }
+    // resetData(){
+    //   // debugger
+    //   setTimeout(()=>{
+    //     this.layer.activation=null
+    //     this.layer.units = null
+    //     this.layer.useBias = false
+    //   },100)
+    // }
   }
 }
 </script>

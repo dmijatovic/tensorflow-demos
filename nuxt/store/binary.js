@@ -31,7 +31,11 @@ export const state=()=>({
     classifyFn,
   },
   features:['Horsepower','Weight_in_lbs','Cylinders', YYYY],
-  data:[]
+  data:[],
+  createModelEnabled:false,
+  trainModelEnabled:false,
+  //save config here?!?
+  config:null
 })
 
 export const actions={
@@ -76,6 +80,14 @@ export const mutations={
     //save data to state
     state.data = data
     state.rawData = rawData
+  },
+  setCreateModelEnabled(state,payload){
+    // debugger
+    state.createModelEnabled = payload
+  },
+  setTrainModelEnabled(state,payload){
+    // debugger
+    state.trainModelEnabled = payload
   }
 }
 

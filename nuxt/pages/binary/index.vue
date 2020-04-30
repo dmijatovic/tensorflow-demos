@@ -31,7 +31,7 @@ export default {
     return{
       nav:{
         prev:{
-          label:'Previous',
+          label:'Back',
           href:'',
           disabled: true
         },
@@ -56,8 +56,15 @@ export default {
     ])
   },
   methods:{
+    init(){
+      // debugger
+      this.nav.next.disabled = this.disableNextBtn()
+      //set if button create should be active
+      this.$store.commit("binary/setCreateModelEnabled",false)
+      this.$store.commit("binary/setTrainModelEnabled",false)
+    },
     disableNextBtn(){
-      debugger
+      // debugger
       if (this.epochs===null) return true
       if (this.batchSize===null) return true
       if (this.optimizer.type===null) return true
@@ -93,7 +100,7 @@ export default {
   },
   mounted(){
     // debugger
-    this.nav.next.disabled = this.disableNextBtn()
+    this.init()
   }
 }
 </script>

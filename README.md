@@ -7,6 +7,16 @@ This repo is used to lern tensorflow and test use with
 - Test use of tfjs with SSR. Nuxt
 - Test use of NodeJS as backend
 
+## Major discoveries
+
+Tensorflow offers different activation functions. During the course these functions are discussed. They do have specific purpose. However with deep neural networks these activation functions (sigmoid, softmax) should be applied on the last layer (output layer). In the 'middle' layers other activation functions can be used. However main problem with deep networks is 'Vanishing gradient problem'. Over the time new activaition functions are produced to address this problem.
+
+- sigmoid: this was first activation used in middle layers (value 0 to 1). It makes network non-linear.
+- tahn: function came as improvement (values -1 to 1)
+- relu/relu6: was solution for deep networks to remidiate weaking of weights (due to multiplication of layer weight with values < 1). Relu values are always > 0 and no max cap (can be infinity)
+- elu (exponentional linear unit): function in the form of hockey stick. It alows negative values.
+- softplus: another version for preventing gradient los in deep networks.
+
 ## Regression
 
 ### MSE (Mean square error)
