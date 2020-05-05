@@ -26,6 +26,7 @@ module.exports = {
     '@/styles/variables.css',
     '@/styles/transitions.css',
     '@/styles/index.css',
+    "@/styles/grid.css",
     "@/styles/cars.css"
   ],
   /*

@@ -1,8 +1,6 @@
 // import * as tf from '@tensorflow/tfjs'
 import * as tfmodel from "../../utils/tf-model"
-import { saveModelToLS, loadModelFromLS,
-  standardizeValues } from "../../utils/tf-data"
-import { create2DTensor } from '../../utils/tf-utils'
+import { saveModelToLS, loadModelFromLS } from "../../utils/tf-data"
 
 export const state=()=>({
   name: "",
@@ -51,7 +49,7 @@ export const actions={
     commit("setTrainingTimeSpend", 0)
     return model
   },
-  async trainModel({commit, dispatch},{payload}){
+  async trainModel({state},{payload}){
     //commit to loading
     if (tfmodel.modelExist===false) throw new Error("Create model first")
     const tfModel = tfmodel.getModel()
@@ -61,7 +59,8 @@ export const actions={
     const {args} = payload
     // debugger
     //feature and label tensors
-    const {features, labels} = await dispatch("createTensors", payload)
+    // const {features, labels} = await dispatch("createTensors", payload)
+    const {features, labels} = tfmodel.createTensors(payload)
     // debugger
     //training
     const stats = await tfModel.fit(features, labels, args)
@@ -74,29 +73,6 @@ export const actions={
     // log data source
     stats['source'] = 'model/trainModel'
     return stats
-  },
-  async createTensors({state},{data=[], label="", features=[]}){
-    const f=[], l=[]
-    // debugger
-    if (data.length===0) throw new Error("model.createTensors: data array is empty!")
-    data.map(rec=>{
-      let fts=[]
-      l.push(rec[label])
-      features.map(fld=>{
-        fts.push(rec[fld])
-      })
-      f.push(fts)
-    })
-
-    if (f.length===0) throw new Error("model.createTensors: features array is empty!")
-    if (l.length===0) throw new Error("model.createTensors: labels array is empty!")
-    const ft = standardizeValues(f)
-    const lb = create2DTensor(l)
-
-    return{
-      features: ft,
-      labels: lb
-    }
   }
 }
 
@@ -110,10 +86,17 @@ export const mutations={
   saveModel(state, payload){
     // debugger
     const {name, model} = payload
+    //save model
     tfmodel.setModel(model)
+    //save model info
     state.name = name
     state.stadium = "created"
-    state.createdAt = new Date()
+    state.createdAt = new Date(),
+    //remove training info
+    state.training={
+      timeSpend: 0,
+      trainedAt: null
+    }
   },
   setTrainingTimeSpend(state,payload){
     state.training.timeSpend = payload
@@ -122,16 +105,30 @@ export const mutations={
     state.training.timeSpend += payload
   },
   setTrainingStats(state, payload){
-    state.training = payload
+    const {training} = state
+    if (training.timeSpend){
+      //additional training
+      state.training = joinTraningStats(training,payload)
+    }else{
+      state.training = payload
+    }
   }
 }
 
 export const getters={
   modelExist(state){
-    return tfmodel.modelExist()
+    // debugger
+    const {stadium} = state
+    let exist = false
+    if (["created", "trained"].includes(stadium)===false){
+      exist = false
+    }
+    exist = tfmodel.modelExist()
+    return exist
   },
   getModel(state){
-    return tfmodel.getModel()
+    const model = tfmodel.getModel()
+    return model
   },
   getModelInfo(state){
     const {name,createdAt,stadium} = state
@@ -164,4 +161,26 @@ export const getters={
       ]
     }
   }
+}
+
+
+function joinTraningStats(oldStats,newStats){
+  let totalStats={
+    ...newStats
+  }
+  const {history:oldH} = oldStats
+  const {history:newH} = newStats
+  //join loss
+  totalStats.history.loss = [
+    ...oldH.loss,
+    ...newH.loss
+  ]
+  //join acc
+  totalStats.history.acc = [
+    ...oldH.acc,
+    ...newH.acc
+  ]
+  //sum training time
+  totalStats.timeSpend+=oldStats.timeSpend
+  return totalStats
 }

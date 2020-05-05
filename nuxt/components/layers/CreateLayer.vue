@@ -1,44 +1,41 @@
 <template>
-  <section>
-    <h4>Create model layer</h4>
-    <div class="layer-row">
-      <dv4-select
-        title="Activation"
-        message="Select activaction function"
-        :options="getActivationOptions"
-        :value="layer.activation"
-        missing-option='select one'
-        @onChange="({target})=>{setOption({target,item:'activation',type:'string'})}"
-        >
-      </dv4-select>
-      <dv4-text-input
-          name="layer-units"
-          label="Units"
-          message="Dimensionality of the output space"
-          :value="layer.units"
-          @onChange="({target})=>{setOption({target,item:'units',type:'int'})}"
+  <section class="grid col-2">
+    <dv4-select
+      title="Activation"
+      message="Select activaction function"
+      :options="getActivationOptions"
+      :value="layer.activation"
+      missing-option='select one'
+      @onChange="({target})=>{setOption({target,item:'activation',type:'string'})}"
       >
-      </dv4-text-input>
-      <div class="layer-checkbox">
-        <input
-          type="checkbox"
-          id="useBias"
-          name="useBias"
-          :checked="layer.useBias"
-          @change="toggleBias"
-          />
-        <label for="useBias">
-          Use bias
-        </label>
-      </div>
-      <div class="layer-nav">
-        <dv4-custom-button
-          @click="addLayer"
-          :disabled="disableAddBtn"
-          primary>
-          Add layer
-        </dv4-custom-button>
-      </div>
+    </dv4-select>
+    <dv4-text-input
+        name="layer-units"
+        label="Units"
+        message="Dimensionality of the output space"
+        :value="layer.units"
+        @onChange="({target})=>{setOption({target,item:'units',type:'int'})}"
+    >
+    </dv4-text-input>
+    <div class="layer-checkbox">
+      <input
+        type="checkbox"
+        id="useBias"
+        name="useBias"
+        :checked="layer.useBias"
+        @change="toggleBias"
+        />
+      <label for="useBias">
+        Use bias
+      </label>
+    </div>
+    <div class="layer-nav">
+      <dv4-custom-button
+        @click="addLayer"
+        :disabled="disableAddBtn"
+      >
+        Add layer
+      </dv4-custom-button>
     </div>
   </section>
 </template>
@@ -92,15 +89,7 @@ export default {
       }
       this.$emit("addLayer", layer)
       // this.resetData()
-    },
-    // resetData(){
-    //   // debugger
-    //   setTimeout(()=>{
-    //     this.layer.activation=null
-    //     this.layer.units = null
-    //     this.layer.useBias = false
-    //   },100)
-    // }
+    }
   }
 }
 </script>
@@ -113,10 +102,10 @@ export default {
 }
 .layer-checkbox{
   display:flex;
-  padding: 1rem;
+  align-items: center;
 }
 .layer-nav{
-  flex:1;
+  justify-self: flex-end;
 }
 
 </style>

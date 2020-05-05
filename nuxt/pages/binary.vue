@@ -13,13 +13,6 @@
           You can use multiple layers with different number of NODES BUT the FINAL LAYER
           should have 1 node as output.
         </p>
-        <p>
-        <div>
-          <DataInfo
-            v-if="data"
-            :dataInfo="dataInfo"
-          />
-        </div>
         <section>
           <nuxt-child/>
         </section>
@@ -38,13 +31,12 @@
 import PageContent from '@/components/page/PageContent'
 import { mapState, mapGetters } from 'vuex'
 import SidePanel from "../components/page/SidePanel"
-import DataInfo from "../components/DataInfo"
+
 
 export default {
   components:{
     PageContent,
-    SidePanel,
-    DataInfo
+    SidePanel
   },
   data(){
     return{
@@ -108,8 +100,6 @@ export default {
       this.$store.dispatch('binary/getCarsData')
       .then(res=>{
         console.log("Data loaded...")
-        // this.enableCreateModel()
-        // this.enableTrainModel()
       })
     },
     navClick(action){
@@ -145,7 +135,6 @@ export default {
           name:"Binary model",
           model
         })
-        commit("binary/setTrainModelEnabled",true)
       }).catch(e=>{
         console.error(e)
         commit("binary/setTrainModelEnabled",false)
@@ -177,7 +166,7 @@ export default {
           commit("model/setTrainingStats", stats)
           commit("model/setModelStadium", "trained")
           dispatch({
-            type: "model/visor/plotTrainingLoss",
+            type: "model/visor/plotTraining",
             payload: {
               ...history,
               name:"Model loss",
@@ -212,61 +201,6 @@ export default {
         message:''
       })
     },
-    // enableCreateModel(){
-    //   debugger
-    //   if (this.canCreateModel){
-    //     this.nav[1].disabled = false
-    //   } else {
-    //     this.nav[1].disabled = true
-    //   }
-    // },
-    // enableTrainModel(){
-    //   // debugger
-    //   this.nav[2].disabled = true
-    //   // if (this.model){
-    //   //   this.nav[2].disabled = false
-    //   // } else {
-    //   //   this.nav[2].disabled = true
-    //   // }
-    // },
-    // getTrainModelActionPayload(){
-    //   debugger
-    //   const {dataInfo, label, features,
-    //     data, epochs, batchSize } = this
-    //   const payload={
-    //     label,
-    //     features,
-    //     data,
-    //     args:{
-    //       epochs,
-    //       batchSize,
-    //       callbacks:{
-    //         onEpochEnd: this.onEpochEnd,
-    //         onTrainEnd: this.onTrainEnd
-    //       }
-    //     }
-    //   }
-    //   return payload
-    // },
-    // onEpochEnd(epoch,logs){
-    //   // console.log("onEpochEnd...", epoch, logs)
-    //   const {epochs} = this.training
-    //   this.$store.commit("setLoader",{
-    //     show: true,
-    //     message: `Epoch...${epoch+1}/${epochs}`
-    //   })
-    // },
-    // onTrainEnd(logs){
-    //   console.log("onTrainEnd...", logs)
-    //   // debugger
-    //   this.$store.commit("setLoader",{
-    //     show:false,
-    //     message:''
-    //   })
-    // },
-    // onActionResponse(resp){
-    //   console.log("onActionResponse...", resp)
-    // }
   }
 }
 </script>

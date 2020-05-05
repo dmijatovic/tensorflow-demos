@@ -1,4 +1,7 @@
 import * as tf from '@tensorflow/tfjs'
+import { standardizeValues } from "./tf-data"
+import { create2DTensor } from './tf-utils'
+
 
 //Tensorflow model object needs to be outside of state
 //because of vuex observers
@@ -48,11 +51,42 @@ export function createSequentialModel({layersDef, optimizerDef,
   return model
 }
 
+/**
+ * Create feature and label tensors from JS data array.
+ * @param {Array} data the data array with all props and data that need to extracted and converted to tensors
+ * @param {String} label the prop name of the label variable to be extracted from data array
+ * @param {Array} features the list of features props to be extracted from data array
+ * @returns {
+ *  features: feature tensor,
+ *  labels: label tensor
+ * }
+ */
+export function createTensors({data=[], label="", features=[]}){
+  const f=[], l=[]
+  // debugger
+  if (data.length===0) throw new Error("model.createTensors: data array is empty!")
+  data.map(rec=>{
+    let fts=[]
+    l.push(rec[label])
+    features.map(fld=>{
+      fts.push(rec[fld])
+    })
+    f.push(fts)
+  })
 
-//---------------------------------------
-// HELPER FUNCTIONS
-//---------------------------------------
+  if (f.length===0) throw new Error("model.createTensors: features array is empty!")
+  if (l.length===0) throw new Error("model.createTensors: labels array is empty!")
+  const ft = standardizeValues(f)
+  const lb = create2DTensor(l)
 
+  return{
+    features: ft,
+    labels: lb
+  }
+}
+//---------------------------------------
+// MODEL HELPER FUNCTIONS
+//---------------------------------------
 function createDenseLayers({layersDef=[], inputShape=[1]}){
   const layers = layersDef.map((layer, pos)=>{
     // debugger

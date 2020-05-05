@@ -1,13 +1,16 @@
 <template>
-<section>
-  <h3>Layers subpage</h3>
-
-  <CreateLayer
-    @addLayer="addLayer"/>
-
-  <LayerList
-    :layersInfo="layers"
-    @deleteLayer="deleteLayer"/>
+<section class="grid col-2">
+  <div>
+    <h3>Create new layer</h3>
+    <CreateLayer
+      @addLayer="addLayer"/>
+  </div>
+  <div>
+    <h3>Layers</h3>
+    <LayerList
+      :layersInfo="layers"
+      @deleteLayer="deleteLayer"/>
+  </div>
 
   <BottomNav
     :prev="nav.prev"
@@ -93,6 +96,9 @@ export default {
 }
 </script>
 
-<style>
-
+<style scoped>
+.bottom-nav{
+  grid-column-start: 1;
+  grid-column-end: 3;
+}
 </style>

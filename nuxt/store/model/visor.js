@@ -1,5 +1,25 @@
 import * as tfvis from '@tensorflow/tfjs-vis'
 
+
+function formatData(data=[], labels=['Loss','Epochs']){
+  const values = data.map((val,i)=>{
+    return {
+      x: i,
+      y: val
+    }
+  })
+  const series=[labels[0]]
+  const config={
+    yLabel:labels[0],
+    xLabel:labels[1]
+  }
+  return{
+    values,
+    series,
+    config
+  }
+}
+
 export const state=()=>({
   visible:false,
 })
@@ -8,26 +28,19 @@ export const actions={
   toggleVisor({commit},action){
     commit("toggleVisor",true)
   },
-  plotTrainingLoss({commit}, payload){
+  plotTraining({commit}, payload){
     // debugger
     if (payload.payload){
       payload = payload.payload
     }
-    const {loss, name, tab} = payload
+    const {acc, loss, name, tab} = payload
     //prepare values
-    const values = loss.map((val,i)=>{
-      return {
-        x: i,
-        y: val
-      }
-    })
-    const series=['Loss']
-    const config={
-      yLabel:'Loss',
-      xLabel:'Epoch'
-    }
+    let setting = formatData(loss,['Loss','Epochs'])
     //create line chart
-    commit("lineChart",{name,tab,values,series, config})
+    commit("lineChart",{name:"Loss chart",tab,...setting})
+    //prepare values
+    setting = formatData(acc,['Acc','Epochs'])
+    commit("lineChart",{name:"Acc chart",tab,...setting})
     return true
   }
 }

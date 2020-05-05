@@ -3,15 +3,11 @@
   <div>
     <h3>Model info</h3>
       <ModelInfo :info="getModelInfo"/>
-    <h3>
-      Training info
-    </h3>
+    <h3>Training info</h3>
     <TrainingInfo :info="getTrainingInfo"/>
   </div>
   <div>
-    <h3>
-      Model summary
-    </h3>
+    <h3>Model summary</h3>
     <ModelSummary :config="getModelConfig" />
   </div>
   <BottomNav
@@ -46,9 +42,9 @@ export default {
           disabled: false
         },
         next:{
-          label:'Train',
-          href:'train',
-          disabled:false
+          label:'Start',
+          href:'/binary',
+          disabled: false
         }
       }
     }

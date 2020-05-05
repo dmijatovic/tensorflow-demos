@@ -1,30 +1,43 @@
 <template>
-<section>
-  <h3>Training subpage</h3>
-  <Epochs
+<section class="grid col-2">
+  <div>
+    <h3>Training</h3>
+    <Epochs
+    class="grid col-2"
     :epochs="epochs"
     :batchSize="batchSize"
     @onChange="setEpochs"
-  />
-  <Optimizer
-    @onChange="setOptimizer"
-  />
-  <Loss
-    @onChange="setLoss"
-  />
+    />
+    <Loss
+      class="grid col-2"
+      @onChange="setLoss"
+    />
+    <Optimizer
+      class="grid col-2"
+      @onChange="setOptimizer"
+    />
+  </div>
+  <div>
+    <h3>Data info</h3>
+    <DataInfo
+      v-if="dataInfo"
+      :dataInfo="dataInfo"
+    />
+  </div>
   <BottomNav
-    :prev="nav.prev"
-    :next="nav.next"
-    @goPath="goPath"
+      :prev="nav.prev"
+      :next="nav.next"
+      @goPath="goPath"
   />
 </section>
 </template>
 
 <script>
-import {mapState} from "vuex"
+import {mapState, mapGetters} from "vuex"
 import Epochs from "../../components/training/Epochs"
 import Optimizer from "../../components/training/Optimizer"
 import Loss from "../../components/training/Loss"
+import DataInfo from "../../components/DataInfo"
 import BottomNav from "../../components/page/BottomNav"
 export default {
   data(){
@@ -47,12 +60,16 @@ export default {
     Epochs,
     Optimizer,
     Loss,
+    DataInfo,
     BottomNav
   },
   computed:{
     ...mapState("model/config",[
       'epochs','batchSize',
       'optimizer', 'loss'
+    ]),
+    ...mapGetters('binary',[
+      'dataInfo'
     ])
   },
   methods:{
@@ -106,9 +123,15 @@ export default {
 </script>
 
 <style scoped>
+
 dv4-custom-button{
   width:8rem;
   text-align: center;
+}
+
+.bottom-nav{
+  grid-column-start: 1;
+  grid-column-end: 3;
 }
 
 </style>

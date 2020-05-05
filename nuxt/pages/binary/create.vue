@@ -1,19 +1,19 @@
 <template>
-  <section>
-    <div>
-      <h3>Model configuration</h3>
-      <ModelSummary :config="getModelConfig" />
-    </div>
-    <div>
-      <h3>Model info</h3>
-      <ModelInfo :info="getModelInfo"/>
-    </div>
+<section class="grid col-2">
+  <div>
+    <h3>Model info</h3>
+    <ModelInfo :info="getModelInfo"/>
+  </div>
+  <div>
+    <h3>Model summary</h3>
+    <ModelSummary :config="getModelConfig" />
+  </div>
     <BottomNav
       :prev="nav.prev"
       :next="nav.next"
       @goPath="goPath"
     />
-  </section>
+</section>
 </template>
 
 <script>
@@ -51,20 +51,40 @@ export default {
       'getModelConfig','canCreateModel'
     ]),
   },
+  watch:{
+    getModelInfo(value,prev){
+      this.enableCreate()
+      this.enableNext()
+    }
+  },
   methods:{
     init(){
-      //if layers are note defined
+      this.enableCreate()
+      this.enableNext()
+      this.disableTrain()
+    },
+    goPath(path){
+      this.$router.push(path)
+    },
+    enableCreate(){
       const {layers} = this.getModelConfig
       //go another step back
       if (layers.length===0){
         this.$router.push("layers")
-      } else {
-        //set if button create should be active
-        this.$store.commit("binary/setCreateModelEnabled",this.canCreateModel)
+      }else{
+        this.$store.commit("binary/setCreateModelEnabled",true)
       }
     },
-    goPath(path){
-      this.$router.push(path)
+    enableNext(){
+      // const {stadium} = this.getModelInfo
+      if (this.modelExist){
+        this.nav.next.disabled = false
+      } else {
+        this.nav.next.disabled = true
+      }
+    },
+    disableTrain(){
+      this.$store.commit("binary/setTrainModelEnabled",false)
     }
   },
   mounted(){
@@ -74,11 +94,6 @@ export default {
 </script>
 
 <style scoped>
-section{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-gap: 1rem;
-}
 .bottom-nav{
   grid-column-start: 1;
   grid-column-end: 3;

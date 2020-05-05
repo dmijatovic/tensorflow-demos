@@ -30,6 +30,7 @@ import ModelSummary from "../../components/model/Summary"
 import BottomNav from "../../components/page/BottomNav"
 import {modelExist} from "../../utils/tf-model"
 import TrainingInfo from "../../components/training/TrainingInfo"
+import { model } from '@tensorflow/tfjs'
 export default {
   components:{
     TrainingInfo,
@@ -56,81 +57,51 @@ export default {
   computed:{
     ...mapState('binary',['data']),
     ...mapGetters("model",[
-      'getModelInfo','getTrainingInfo'
+      'modelExist','getModelInfo',
+      'getTrainingInfo'
     ]),
     ...mapGetters("model/config",[
       'getModelConfig'
     ]),
   },
-  methods:{
-    goPath(path){
-      if (path==='train'){
-        this.trainModel()
-      }else{
-        this.$router.push(path)
-      }
-    },
-    trainModel(){
-      const {label, features, epochs, batchSize} = this.getModelConfig
-      const action={
-        type: "model/trainModel",
-        payload:{
-          label,
-          features,
-          data: this.data,
-          args:{
-            epochs,
-            batchSize,
-            callbacks:{
-              onEpochEnd: this.onEpochEnd,
-              onTrainEnd: this.onTrainEnd
-            }
-          }
-        }
-      }
-      this.$store.dispatch(action)
-        .then(resp=>{
-          if (resp) this.onActionResponse(resp)
-        })
-        .catch(e=>{
-          console.error(e)
-          this.$store.commit("setLoader",{
-            show:false,
-            message:''
-          })
-        })
-    },
-    onEpochEnd(epoch,logs){
-      // console.log("onEpochEnd...", epoch, logs)
-      const {epochs} = this.getModelConfig
-      // debugger
-      this.$store.commit("setLoader",{
-        show: true,
-        message: `Epoch...${epoch+1}/${epochs}`
-      })
-    },
-    onTrainEnd(logs){
-      console.log("onTrainEnd...", logs)
-      // debugger
-      this.$store.commit("setLoader",{
-        show:false,
-        message:''
-      })
-    },
-    onActionResponse(resp){
-      console.log("onActionResponse...", resp)
+  watch:{
+    getTrainingInfo(value,prev){
+      this.enableNext()
     }
-
+  },
+  methods:{
+    init(){
+      this.disableCreate()
+      this.enableTrain()
+      this.enableNext()
+    },
+    goPath(path){
+      this.$router.push(path)
+    },
+    disableCreate(){
+      //cannot create model from train page - go back
+      this.$store.commit("binary/setCreateModelEnabled", false)
+    },
+    enableTrain(){
+      // debugger
+      if (this.modelExist){
+        this.$store.commit("binary/setTrainModelEnabled",true)
+      } else {
+        this.$store.commit("binary/setTrainModelEnabled",false)
+      }
+    },
+    enableNext(){
+      const {timeSpend} = this.getTrainingInfo
+      if (timeSpend){
+        //can proceed to next section
+        this.nav.next.disabled = false
+      }else{
+        this.nav.next.disabled = true
+      }
+    }
   },
   mounted(){
-    this.nav.next.disabled = !modelExist()
-    // this.init()
-    console.log("model.mounted...", this.nav.next.disabled)
-  },
-  beforeUpdate(){
-    // debugger
-    this.nav.next.disabled = !modelExist()
-    console.log("model.beforeUpdate...", this.nav.next.disabled)
+    this.init()
   }
 }
 </script>
