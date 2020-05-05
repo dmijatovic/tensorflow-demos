@@ -8,14 +8,7 @@
         :nav="nav"
         @navClick="navClick"/>
       <article class="page-content">
-        <p>
-          On this page we demonstrate binary classification approach with tensorflow.
-          You can use multiple layers with different number of NODES BUT the FINAL LAYER
-          should have 1 node as output.
-        </p>
-        <section>
-          <nuxt-child/>
-        </section>
+        <nuxt-child/>
       </article>
       <dv4-loader-timer
         overlay="true"
@@ -32,44 +25,29 @@ import PageContent from '@/components/page/PageContent'
 import { mapState, mapGetters } from 'vuex'
 import SidePanel from "../components/page/SidePanel"
 
-
 export default {
+  asyncData(ctx){
+    // debugger
+    const {commit} = ctx.store
+    return fetch("/data/binary/sections.json")
+      .then(resp=>resp.json())
+      .then(data=>{
+        if (data){
+          commit("binary/setSections",data)
+        }
+      })
+  },
   components:{
     PageContent,
     SidePanel
-  },
-  data(){
-    return{
-      nav:[{
-        label:"Toggle visor",
-        action:{type:"model/visor/toggleVisor"},
-        disabled: false
-      },{
-        label:"Create model",
-        action:{
-          type:'model/createSequentialModel',
-          payload:{
-            name:'binary-cars-model',
-            inputShape:[1]
-          }
-        },
-        disabled: !this.createModelEnabled
-      },{
-        label:"Train model",
-        action:{
-          type:"model/trainModel",
-          payload:{}
-        },
-        disabled: !this.trainModelEnabled
-      }]
-    }
   },
   computed:{
     ...mapState([
       'loader'
     ]),
     ...mapState('binary',[
-      'data','createModelEnabled',
+      'nav', 'data',
+      'createModelEnabled',
       'trainModelEnabled'
     ]),
     ...mapGetters('binary',[
@@ -78,18 +56,6 @@ export default {
     ...mapGetters('model/config',[
       'getModelConfig'
     ])
-  },
-  watch:{
-    createModelEnabled(value, previous){
-      // debugger
-      console.log("watch.createModelEnabled...changed")
-      this.nav[1].disabled = !value
-    },
-    trainModelEnabled(value, previous){
-      // debugger
-      console.log("watch.trainModelEnabled...changed")
-      this.nav[2].disabled = !value
-    }
   },
   mounted(){
     this.init()

@@ -1,34 +1,41 @@
 <template>
-<section class="grid col-2">
-  <div>
-    <h3>Training</h3>
-    <Epochs
-    class="grid col-2"
-    :epochs="epochs"
-    :batchSize="batchSize"
-    @onChange="setEpochs"
-    />
-    <Loss
+<section>
+  <Paragraph
+    v-for="(section, key) in sections"
+    :key="key"
+    :title="section.title"
+    :text="section.text" />
+  <section class="grid col-2">
+    <div>
+      <h3>Training</h3>
+      <Epochs
       class="grid col-2"
-      @onChange="setLoss"
+      :epochs="epochs"
+      :batchSize="batchSize"
+      @onChange="setEpochs"
+      />
+      <Loss
+        class="grid col-2"
+        @onChange="setLoss"
+      />
+      <Optimizer
+        class="grid col-2"
+        @onChange="setOptimizer"
+      />
+    </div>
+    <div>
+      <h3>Data info</h3>
+      <DataInfo
+        v-if="dataInfo"
+        :dataInfo="dataInfo"
+      />
+    </div>
+    <BottomNav
+        :prev="nav.prev"
+        :next="nav.next"
+        @goPath="goPath"
     />
-    <Optimizer
-      class="grid col-2"
-      @onChange="setOptimizer"
-    />
-  </div>
-  <div>
-    <h3>Data info</h3>
-    <DataInfo
-      v-if="dataInfo"
-      :dataInfo="dataInfo"
-    />
-  </div>
-  <BottomNav
-      :prev="nav.prev"
-      :next="nav.next"
-      @goPath="goPath"
-  />
+  </section>
 </section>
 </template>
 
@@ -39,6 +46,8 @@ import Optimizer from "../../components/training/Optimizer"
 import Loss from "../../components/training/Loss"
 import DataInfo from "../../components/DataInfo"
 import BottomNav from "../../components/page/BottomNav"
+import Paragraph from "../../components/page/Paragraph"
+
 export default {
   data(){
     return{
@@ -61,13 +70,19 @@ export default {
     Optimizer,
     Loss,
     DataInfo,
-    BottomNav
+    BottomNav,
+    Paragraph
   },
   computed:{
     ...mapState("model/config",[
       'epochs','batchSize',
       'optimizer', 'loss'
     ]),
+    ...mapState("binary",{
+      sections:(state)=>{
+        return state.sections['index']
+      }
+    }),
     ...mapGetters('binary',[
       'dataInfo'
     ])

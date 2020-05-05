@@ -1,18 +1,25 @@
 <template>
-<section class="grid col-2">
-  <div>
-    <h3>Model info</h3>
-    <ModelInfo :info="getModelInfo"/>
-  </div>
-  <div>
-    <h3>Model summary</h3>
-    <ModelSummary :config="getModelConfig" />
-  </div>
-    <BottomNav
-      :prev="nav.prev"
-      :next="nav.next"
-      @goPath="goPath"
-    />
+<section>
+  <Paragraph
+      v-for="(section, key) in sections"
+      :key="key"
+      :title="section.title"
+      :text="section.text" />
+  <section class="grid col-2">
+    <div>
+      <h3>Model info</h3>
+      <ModelInfo :info="getModelInfo"/>
+    </div>
+    <div>
+      <h3>Model summary</h3>
+      <ModelSummary :config="getModelConfig" />
+    </div>
+      <BottomNav
+        :prev="nav.prev"
+        :next="nav.next"
+        @goPath="goPath"
+      />
+  </section>
 </section>
 </template>
 
@@ -21,11 +28,14 @@ import {mapState, mapGetters} from "vuex"
 import ModelSummary from "../../components/model/Summary"
 import ModelInfo from "../../components/model/Info"
 import BottomNav from "../../components/page/BottomNav"
+import Paragraph from "../../components/page/Paragraph"
+
 export default {
   components:{
     ModelSummary,
     ModelInfo,
-    BottomNav
+    BottomNav,
+    Paragraph
   },
   data(){
     return{
@@ -44,6 +54,11 @@ export default {
     }
   },
   computed:{
+    ...mapState("binary",{
+      sections:(state)=>{
+        return state.sections['create']
+      }
+    }),
     ...mapGetters("model",[
       'modelExist', 'getModelInfo'
     ]),

@@ -1,23 +1,28 @@
 <template>
-<section class="grid col-2">
-  <div>
-    <h3>Create new layer</h3>
-    <CreateLayer
-      @addLayer="addLayer"/>
-  </div>
-  <div>
-    <h3>Layers</h3>
-    <LayerList
-      :layersInfo="layers"
-      @deleteLayer="deleteLayer"/>
-  </div>
-
-  <BottomNav
-    :prev="nav.prev"
-    :next="nav.next"
-    @goPath="goPath"
-  />
-
+<section>
+  <Paragraph
+    v-for="(section, key) in sections"
+    :key="key"
+    :title="section.title"
+    :text="section.text" />
+  <section class="grid col-2">
+    <div>
+      <h3>Create new layer</h3>
+      <CreateLayer
+        @addLayer="addLayer"/>
+    </div>
+    <div>
+      <h3>Layers</h3>
+      <LayerList
+        :layersInfo="layers"
+        @deleteLayer="deleteLayer"/>
+    </div>
+    <BottomNav
+      :prev="nav.prev"
+      :next="nav.next"
+      @goPath="goPath"
+    />
+  </section>
 </section>
 </template>
 
@@ -26,12 +31,14 @@ import {mapState, mapGetters} from "vuex"
 import CreateLayer from "../../components/layers/CreateLayer"
 import LayerList from "../../components/layers/LayerList"
 import BottomNav from "../../components/page/BottomNav"
+import Paragraph from "../../components/page/Paragraph"
 
 export default {
   components:{
     CreateLayer,
     LayerList,
-    BottomNav
+    BottomNav,
+    Paragraph
   },
   data(){
     return{
@@ -51,6 +58,11 @@ export default {
     }
   },
   computed:{
+    ...mapState("binary",{
+      sections:(state)=>{
+        return state.sections['layers']
+      }
+    }),
     ...mapState("model/config",[
       'layers'
     ]),

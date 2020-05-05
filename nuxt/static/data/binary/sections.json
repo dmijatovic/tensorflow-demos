@@ -1,0 +1,25 @@
+{
+  "index":[{
+    "title":"Training params",
+    "text":"On this page we demonstrate binary classification approach with tensorflow. First define number of epochs and batchSize for the training. Next define loss function and the optimizer function. The default values are the ones that are widely used, but you can try different ones. After selecting parameters click on NEXT button to go to next stage."
+  }],
+  "layers":[{
+    "title":"Model layers",
+    "text":"Define layers for the model. Binary model works best with sigmoid function. You can have more than one layer with more than one output unit in the immeditate layer. However the LAST layer (output layer) need to have ONE unit because the output is single probabilty value."
+  },{
+    "title":null,
+    "text":"Define new layer on the left side of the page and use Add layer button. Defined layers are shown on the right side of the screen. When you defined all layers you want to use in the model use Next button to go to next stage."
+  }],
+  "create":[{
+    "title":"Create model",
+    "text":"Create new model. If the model already exists click on Next button to go to next section."
+  }],
+  "train":[{
+    "title":"Train your model",
+    "text":"This section is used to train your model and shows relevant stats after the training is conducted."
+  }],
+  "save":[{
+    "title":"Save your model",
+    "text":"Use save model button to save the model. Model can be saved in local storage of your browser or downloaded."
+  }]
+}

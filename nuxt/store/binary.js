@@ -21,8 +21,38 @@ function missingCheck(row){
   return true
 }
 
+const nav=[{
+  label:"Toggle visor",
+  action:{type:"model/visor/toggleVisor"},
+  disabled: false
+},{
+  label:"Create model",
+  action:{
+    type:'model/createSequentialModel',
+    payload:{
+      name:'binary-cars-model',
+      inputShape:[1]
+    }
+  },
+  disabled: true
+},{
+  label:"Train model",
+  action:{
+    type:"model/trainModel",
+    payload:{}
+  },
+  disabled: true
+}]
+
 export const state=()=>({
   validation: missingCheck,
+  sections:{
+    index:[{
+      title:null,
+      text:''
+    }]
+  },
+  nav:nav,
   label:{
     //number, boolean, categorical
     type:'boolean',
@@ -81,16 +111,33 @@ export const mutations={
     state.data = data
     state.rawData = rawData
   },
-  setCreateModelEnabled(state,payload){
+  setCreateModelEnabled(state,payload, ...others){
     // debugger
     state.createModelEnabled = payload
+    console.log("others...", others)
+    this.commit("binary/setNavItemDisabled",{
+      pos:1,
+      value:!payload
+    })
   },
   setTrainModelEnabled(state,payload){
     // debugger
     state.trainModelEnabled = payload
+    this.commit("binary/setNavItemDisabled",{
+      pos:2,
+      value:!payload
+    })
+  },
+  setNavItemDisabled(state,payload){
+    // debugger
+    const {nav} = state
+    const {pos, value} = payload
+    nav[pos].disabled = value
+  },
+  setSections(state,payload){
+    state.sections = payload
   }
 }
-
 
 export const getters={
   dataInfo: state =>{
